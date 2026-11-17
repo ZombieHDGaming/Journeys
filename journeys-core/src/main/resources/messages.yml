@@ -1,0 +1,114 @@
+# Journeys messages, in MiniMessage format: https://docs.advntr.dev/minimessage/format.html
+# <prefix> works in every message. Set a message to '' to disable it.
+# Placeholders available to a message are listed next to it.
+
+prefix: '<dark_gray>[<gradient:#f6d365:#fda085>Journeys</gradient>]</dark_gray> '
+
+quest:
+  # <quest>
+  started: '<prefix><green>Quest started: <quest>'
+  # <quest>, <stage>
+  stage-started: '<prefix><gray>New objective in <quest><gray>: <stage>'
+  # <quest>, <objective>, <progress>, <goal>
+  objective-progress: '<quest> <dark_gray>» <gray><objective> <white><progress>/<goal>'
+  objective-complete: '<prefix><green>✔</green> <gray><objective></gray>'
+  # <quest>
+  completed: '<prefix><gold><bold>Quest complete!</bold></gold> <quest>'
+  failed: '<prefix><red>Quest failed: <quest>'
+  abandoned: '<prefix><gray>You abandoned <quest><gray>.'
+  # <quest>, <stage>
+  choice-header: '<prefix><yellow>Choose how <quest><yellow> continues:'
+  # <label>
+  choice-option: '  <dark_gray>»</dark_gray> <label>'
+  choice-hover: '<gray>Click to choose'
+
+bossbar:
+  # <quest>, <stage>, <objective>, <progress>, <goal> (of the current objective), <percent> (of the stage)
+  title: '<quest> <dark_gray>»</dark_gray> <white><objective></white> <gray><progress>/<goal>'
+  # Stage done, waiting for the player to choose a path or for a transition's conditions. <quest>, <stage>
+  title-waiting: '<quest> <dark_gray>»</dark_gray> <yellow>Choose your path'
+
+start:
+  # <quest>
+  unknown-quest: '<prefix><red>There is no quest called <quest>.'
+  not-loaded: '<prefix><red>Your quest data is still loading. Try again in a moment.'
+  already-active: '<prefix><red>You are already on <quest><red>.'
+  already-completed: '<prefix><red>You have already completed <quest><red>.'
+  max-completions: '<prefix><red>You cannot do <quest><red> any more times.'
+  # <quest>, <time>
+  on-cooldown: '<prefix><red>You can do <quest><red> again in <time>.'
+  requirements-not-met: '<prefix><red>You do not meet the requirements for <quest><red>.'
+  cancelled: ''
+
+command:
+  players-only: '<prefix><red>Only players can do that.'
+  # <quest>
+  not-active: '<prefix><red>You are not on a quest called <quest>.'
+  not-abandonable: '<prefix><red><quest><red> cannot be abandoned.'
+  choose-failed: '<prefix><red>That choice is not available.'
+  # <quest>
+  tracked: '<prefix><gray>Now tracking <quest><gray>.'
+  untracked: '<prefix><gray>You are no longer tracking a quest.'
+  # <quest>, <player>, <result>
+  start-result: '<prefix><gray>Start <quest><gray> for <white><player></white>: <white><result>'
+  # <count>
+  reloaded: '<prefix><green>Reloaded. <white><count></white> quest(s) loaded.'
+  list-header: '<prefix><gray><count> quest(s) loaded:'
+  # <id>, <quest>, <stages>, <warnings>
+  list-entry: ' <dark_gray>•</dark_gray> <white><id></white> <quest> <dark_gray>(<stages> stages)<yellow><warnings>'
+  # <id>, <problem>
+  list-broken: ' <dark_gray>•</dark_gray> <red><id> failed to load: <gray><problem>'
+
+editor:
+  prompt-cancel-hint: '<dark_gray>Type <white>cancel</white> to go back.'
+
+gui:
+  board:
+    title: '<dark_gray>Quest board'
+    # <category>
+    title-category: '<dark_gray>Quests » <category>'
+    # <available>, <total>
+    category-count: '<green><available> available</green> <dark_gray>· <gray><total> quests'
+    available: '<green>Click to accept'
+    available-elsewhere: '<yellow>Available. Find out where to begin it.'
+    active: '<aqua>In progress <dark_gray>(click to open your quest log)'
+    # <time>
+    cooldown: '<gold>Available again in <time>'
+    completed: '<dark_green>✔ Completed'
+    loading: '<gray>Loading your progress...'
+    locked: '<red>🔒 Locked. Requires:'
+    # <requirement>
+    requirement-met: ' <green>✔</green> <gray><requirement>'
+    requirement-missing: ' <red>✖</red> <white><requirement>'
+    permission-requirement: 'Special access'
+    rewards-header: '<gold>Rewards:'
+    # <reward>
+    reward: ' <dark_gray>•</dark_gray> <gray><reward>'
+    open-log: '<yellow>Your quest log'
+    empty: '<gray>No quests here right now.'
+  log:
+    open-board: '<yellow>Quest board'
+    title-active: '<dark_gray>Quest log'
+    title-history: '<dark_gray>Quest history'
+    show-history: '<yellow>Show history'
+    show-active: '<yellow>Show active quests'
+    # <stage>
+    stage: '<gray>Current: <stage>'
+    # <objective>, <progress>, <goal>
+    objective: '<dark_gray>• <gray><objective> <white><progress>/<goal>'
+    objective-done: '<green>✔ <dark_gray><st><objective></st>'
+    choice-pending: '<yellow>Click to choose your path'
+    tracked: '<gold>★ Tracked'
+    track-hint: '<dark_gray>Right-click to track'
+    untrack-hint: '<dark_gray>Right-click to stop tracking'
+    abandon-hint: '<dark_gray>Shift-right-click to abandon'
+    # <quest>
+    abandon-confirm: '<red>Abandon <quest><red>?'
+    # <status>, <completions>
+    history-entry: |-
+      <gray>Last result: <white><status>
+      <gray>Times completed: <white><completions>
+  choice:
+    # <quest>
+    title: '<dark_gray>Choose » <quest>'
+    hint: '<gray>Click to choose'

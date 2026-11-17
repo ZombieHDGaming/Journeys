@@ -1,0 +1,25 @@
+# Quest board categories. A quest picks one with settings.board.category in its file (or in the editor).
+# Categories that are not listed here still work; they use their id as the name and a book as the icon.
+#
+#   name:        MiniMessage
+#   icon:        item id
+#   description: MiniMessage lines
+#   order:       lower comes first on the board
+
+categories:
+  story:
+    name: '<gradient:#f6d365:#fda085>Story</gradient>'
+    icon: minecraft:written_book
+    description:
+      - '<gray>The main tale, one chapter at a time.'
+    order: 0
+  jobs:
+    name: '<green>Odd jobs'
+    icon: minecraft:iron_axe
+    description:
+      - '<gray>Repeatable work for the locals.'
+    order: 1
+  general:
+    name: '<white>General'
+    icon: minecraft:book
+    order: 2
