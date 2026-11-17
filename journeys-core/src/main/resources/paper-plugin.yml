@@ -1,0 +1,47 @@
+name: Journeys
+version: '${version}'
+main: dev.voidscape.journeys.core.JourneysPlugin
+loader: dev.voidscape.journeys.core.JourneysLoader
+api-version: '26.3'
+description: Flexible, branching quests with an in-game editor.
+
+dependencies:
+  server:
+    FancyNpcs:
+      load: BEFORE
+      required: false
+      join-classpath: true
+
+permissions:
+  journeys.command.log:
+    description: Open the quest log.
+    default: true
+  journeys.command.abandon:
+    description: Abandon your own quests (when the quest allows it).
+    default: true
+  journeys.command.choose:
+    description: Pick a branch on choice stages.
+    default: true
+  journeys.command.start:
+    description: Start quests for yourself or others.
+    default: op
+  journeys.command.list:
+    description: List loaded quests and quest files with problems.
+    default: op
+  journeys.command.reload:
+    description: Reload messages and quest files.
+    default: op
+  journeys.editor:
+    description: Use the in-game quest editor.
+    default: op
+  journeys.admin:
+    description: Every Journeys permission, plus abandoning quests marked as not abandonable.
+    default: op
+    children:
+      journeys.command.log: true
+      journeys.command.abandon: true
+      journeys.command.choose: true
+      journeys.command.start: true
+      journeys.command.list: true
+      journeys.command.reload: true
+      journeys.editor: true

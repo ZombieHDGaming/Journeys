@@ -1,0 +1,90 @@
+# Example quest showing stages, a player choice and conditional branching.
+# Edit it in game with /journeys editor example_woodcutter, or delete this file.
+
+display-name: '<gradient:#a8e063:#56ab2f>The Woodcutter''s Request</gradient>'
+description:
+  - '<gray>The old woodcutter needs help'
+  - '<gray>restocking for winter.'
+icon: minecraft:oak_log
+settings:
+  repeatable: true
+  cooldown: 1d
+  max-completions: 0
+  scope: solo
+  abandonable: true
+  hidden: false
+start-stage: gather
+requirements: []
+rewards:
+  - type: journeys:experience
+    params:
+      amount: 50
+properties: {}
+
+stages:
+  gather:
+    display-name: '<yellow>Gather wood'
+    description:
+      - '<gray>Chop some oak and birch logs.'
+    objective-mode: all
+    objectives:
+      - id: logs
+        type: journeys:break_block
+        amount: 16
+        description: '<gray>Chop oak or birch logs'
+        params:
+          block: [oak_log, birch_log]
+      - id: planks
+        type: journeys:craft_item
+        amount: 8
+        params:
+          item: oak_planks
+    branch-mode: choice
+    transitions:
+      - to: deliver
+        label: '<green>Deliver the wood to the woodcutter'
+      - to: sell
+        label: '<gold>Sell the wood yourself <gray>(level 5+)'
+        conditions:
+          - type: journeys:min_level
+            params:
+              level: 5
+    rewards: []
+
+  deliver:
+    display-name: '<yellow>Keep the cold away'
+    description:
+      - '<gray>The woodcutter asks you to clear out some zombies too.'
+    objective-mode: sequential
+    objectives:
+      - id: zombies
+        type: journeys:kill_entity
+        amount: 3
+        params:
+          entity: [zombie, zombie_villager, husk]
+    branch-mode: automatic
+    transitions:
+      - to: '@complete'
+    rewards:
+      - type: journeys:item
+        params:
+          item: bread
+          amount: 8
+
+  sell:
+    display-name: '<yellow>A merchant''s path'
+    description:
+      - '<gray>Trade your way to a fortune.'
+    objective-mode: any
+    objectives:
+      - id: emeralds
+        type: journeys:collect_item
+        amount: 5
+        params:
+          item: emerald
+    branch-mode: automatic
+    transitions: []
+    rewards:
+      - type: journeys:message
+        params:
+          message: '<green>The woodcutter grumbles, but you are richer for it.'

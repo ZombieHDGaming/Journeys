@@ -1,0 +1,24 @@
+# Journeys configuration.
+# Changes to this file need a server restart. Quests and messages reload with /journeys reload.
+
+storage:
+  # sqlite (single server, zero setup), mysql or mariadb (needed to share progress across a network).
+  type: sqlite
+  # Prefix for every table Journeys creates. Letters, digits and underscores only.
+  table-prefix: journeys_
+  sqlite:
+    # Relative to plugins/Journeys.
+    file: progress.db
+  sql:
+    host: localhost
+    port: 3306
+    database: journeys
+    username: root
+    password: ''
+    pool-size: 6
+
+# How often changed progress is written to storage, in seconds. Progress is also saved when players leave.
+autosave-seconds: 300
+
+# Show objective progress (e.g. "Oak logs 3/10") in the action bar.
+progress-action-bar: true
