@@ -1,6 +1,7 @@
 package dev.voidscape.journeys.core.gui;
 
 import dev.voidscape.journeys.api.event.ObjectiveProgressEvent;
+import dev.voidscape.journeys.api.event.ObjectiveRegressEvent;
 import dev.voidscape.journeys.api.event.QuestEndEvent;
 import dev.voidscape.journeys.api.event.QuestEvent;
 import dev.voidscape.journeys.api.event.QuestStageChangeEvent;
@@ -20,7 +21,7 @@ import org.jspecify.annotations.Nullable;
  * Keeps open {@linkplain Menu#live() live} menus current.
  *
  * <ul>
- *   <li>Instantly, when Journeys changes a player's quests: refreshes are batched and run on the next tick, after
+ *   <li>Instantly, when Journeys changes a player's quests (including progress taken back): refreshes are batched and run on the next tick, after
  *   the change has been applied (some events fire just before it is).</li>
  *   <li>On a timer, to catch changes Journeys cannot see, such as permissions or experience levels.</li>
  * </ul>
@@ -95,6 +96,11 @@ public final class LiveMenus implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onProgress(ObjectiveProgressEvent event) {
+        schedule(event);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onRegress(ObjectiveRegressEvent event) {
         schedule(event);
     }
 }

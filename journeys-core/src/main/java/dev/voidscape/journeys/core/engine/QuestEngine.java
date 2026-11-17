@@ -1,6 +1,7 @@
 package dev.voidscape.journeys.core.engine;
 
 import dev.voidscape.journeys.api.event.ObjectiveProgressEvent;
+import dev.voidscape.journeys.api.event.ObjectiveRegressEvent;
 import dev.voidscape.journeys.api.event.QuestEndEvent;
 import dev.voidscape.journeys.api.event.QuestStageChangeEvent;
 import dev.voidscape.journeys.api.event.QuestStartEvent;
@@ -570,7 +571,12 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
                     if (current <= 0 || !objective.type().equals(type.key()) || !safeMatch(matcher, quest.get(), stage.get(), objective)) {
                         continue;
                     }
-                    int updated = Math.max(0, current - amount);
+                    ObjectiveRegressEvent event = new ObjectiveRegressEvent(entry.holder, quest.get(), player, stage.get(),
+                            objective, current, amount);
+                    if (!event.callEvent()) {
+                        continue;
+                    }
+                    int updated = Math.max(0, current - event.amount());
                     state.objectives.put(objective.id(), updated);
                     state.touch();
                     regressed++;

@@ -21,7 +21,7 @@ public interface ObjectiveTracker {
     /**
      * Takes progress away, for objectives that count something which can be undone, such as placing a block that is
      * later broken. Only objectives in a stage that is still in progress are affected; progress never drops below 0.
-     * No {@link dev.voidscape.journeys.api.event.ObjectiveProgressEvent} is fired.
+     * Fires a cancellable {@link dev.voidscape.journeys.api.event.ObjectiveRegressEvent} for each objective first.
      *
      * @return how many objectives lost progress
      */
