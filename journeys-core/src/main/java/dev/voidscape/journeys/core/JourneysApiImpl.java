@@ -1,6 +1,7 @@
 package dev.voidscape.journeys.core;
 
 import dev.voidscape.journeys.api.JourneysApi;
+import dev.voidscape.journeys.api.block.PlacedBlocks;
 import dev.voidscape.journeys.api.holder.HolderService;
 import dev.voidscape.journeys.api.progress.QuestService;
 import dev.voidscape.journeys.api.quest.QuestRepository;
@@ -17,6 +18,7 @@ record JourneysApiImpl(
         QuestService questService,
         ObjectiveTracker objectiveTracker,
         HolderService holders,
+        PlacedBlocks placedBlocks,
         Registries registries
 ) implements JourneysApi {
 

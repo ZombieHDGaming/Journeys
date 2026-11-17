@@ -1,5 +1,6 @@
 package dev.voidscape.journeys.api;
 
+import dev.voidscape.journeys.api.block.PlacedBlocks;
 import dev.voidscape.journeys.api.holder.HolderService;
 import dev.voidscape.journeys.api.progress.QuestService;
 import dev.voidscape.journeys.api.quest.QuestRepository;
@@ -29,6 +30,9 @@ public interface JourneysApi {
 
     /** Resolves who owns quest progress (a single player or a party). */
     HolderService holders();
+
+    /** Tracks player-placed blocks, for objectives that should not count place-and-break farming. */
+    PlacedBlocks placedBlocks();
 
     TypeRegistry<ObjectiveType> objectiveTypes();
 

@@ -1,5 +1,6 @@
 package dev.voidscape.journeys.core.type.builtin;
 
+import dev.voidscape.journeys.api.block.PlacedBlocks;
 import dev.voidscape.journeys.api.type.ObjectiveTracker;
 import dev.voidscape.journeys.api.type.ObjectiveType;
 import dev.voidscape.journeys.api.type.Parameter;
@@ -9,8 +10,10 @@ import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.translation.Translatable;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -33,12 +36,12 @@ public final class ObjectiveTypes {
     private ObjectiveTypes() {
     }
 
-    public static List<ObjectiveType> all(ObjectiveTracker tracker) {
+    public static List<ObjectiveType> all(ObjectiveTracker tracker, PlacedBlocks placed) {
         return List.of(
                 new KillEntity(tracker),
-                new BreakBlock(tracker),
-                new PlaceBlock(tracker),
-                new CollectItem(tracker),
+                new BreakBlock(tracker, placed),
+                new PlaceBlock(tracker, placed),
+                new CollectItem(tracker, placed),
                 new CraftItem(tracker),
                 new Fish(tracker),
                 new ReachLocation(tracker)
@@ -89,8 +92,14 @@ public final class ObjectiveTypes {
         static final Parameter<List<Material>> BLOCK = Parameter.optional("block", Component.text("Blocks (empty = any)"),
                 ParameterTypes.listOf(ParameterTypes.BLOCK), null);
 
-        BreakBlock(ObjectiveTracker tracker) {
-            super(tracker, "break_block", "Break blocks", "minecraft:iron_pickaxe", BLOCK);
+        static final Parameter<Boolean> COUNT_PLACED = Parameter.optional("count-placed",
+                Component.text("Count blocks placed by players"), ParameterTypes.BOOLEAN, "false");
+
+        private final PlacedBlocks placed;
+
+        BreakBlock(ObjectiveTracker tracker, PlacedBlocks placed) {
+            super(tracker, "break_block", "Break blocks", "minecraft:iron_pickaxe", BLOCK, COUNT_PLACED);
+            this.placed = placed;
         }
 
         @Override
@@ -98,10 +107,13 @@ public final class ObjectiveTypes {
             return Component.text("Break ").append(names(values.getOrNull(BLOCK), "any block"));
         }
 
-        @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+        /** HIGHEST, not MONITOR: the placed-block mark is cleared at MONITOR. Nothing here changes the event. */
+        @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
         public void onBreak(BlockBreakEvent event) {
-            Material type = event.getBlock().getType();
-            tracker.progress(event.getPlayer(), this, v -> anyOrContains(v, BLOCK, type), 1);
+            Block block = event.getBlock();
+            Material type = block.getType();
+            boolean natural = placed.isNatural(block);
+            tracker.progress(event.getPlayer(), this, v -> (natural || v.get(COUNT_PLACED)) && anyOrContains(v, BLOCK, type), 1);
         }
     }
 
@@ -109,8 +121,14 @@ public final class ObjectiveTypes {
         static final Parameter<List<Material>> BLOCK = Parameter.optional("block", Component.text("Blocks (empty = any)"),
                 ParameterTypes.listOf(ParameterTypes.BLOCK), null);
 
-        PlaceBlock(ObjectiveTracker tracker) {
-            super(tracker, "place_block", "Place blocks", "minecraft:bricks", BLOCK);
+        static final Parameter<Boolean> SUBTRACT_ON_BREAK = Parameter.optional("subtract-on-break",
+                Component.text("Breaking a placed block takes progress back"), ParameterTypes.BOOLEAN, "true");
+
+        private final PlacedBlocks placed;
+
+        PlaceBlock(ObjectiveTracker tracker, PlacedBlocks placed) {
+            super(tracker, "place_block", "Place blocks", "minecraft:bricks", BLOCK, SUBTRACT_ON_BREAK);
+            this.placed = placed;
         }
 
         @Override
@@ -123,14 +141,37 @@ public final class ObjectiveTypes {
             Material type = event.getBlockPlaced().getType();
             tracker.progress(event.getPlayer(), this, v -> anyOrContains(v, BLOCK, type), 1);
         }
+
+        /**
+         * Counts placements net of removals, so placing and breaking the same block repeatedly gains nothing. Progress
+         * is taken from whoever placed the block, if they are online. Harvesting a fully grown crop is not a removal.
+         */
+        @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+        public void onBreak(BlockBreakEvent event) {
+            Block block = event.getBlock();
+            if (placed.isNatural(block)) {
+                return;
+            }
+            Player placer = placed.placer(block).map(Bukkit::getPlayer).orElse(null);
+            if (placer != null) {
+                Material type = block.getType();
+                tracker.regress(placer, this, v -> v.get(SUBTRACT_ON_BREAK) && anyOrContains(v, BLOCK, type), 1);
+            }
+        }
     }
 
     static final class CollectItem extends TrackedObjective {
         static final Parameter<List<Material>> ITEM = Parameter.optional("item", Component.text("Items (empty = any)"),
                 ParameterTypes.listOf(ParameterTypes.ITEM), null);
 
-        CollectItem(ObjectiveTracker tracker) {
-            super(tracker, "collect_item", "Pick up items", "minecraft:hopper", ITEM);
+        static final Parameter<Boolean> COUNT_DROPPED = Parameter.optional("count-dropped",
+                Component.text("Count items dropped by players or from placed blocks"), ParameterTypes.BOOLEAN, "false");
+
+        private final PlacedBlocks placed;
+
+        CollectItem(ObjectiveTracker tracker, PlacedBlocks placed) {
+            super(tracker, "collect_item", "Pick up items", "minecraft:hopper", ITEM, COUNT_DROPPED);
+            this.placed = placed;
         }
 
         @Override
@@ -141,9 +182,12 @@ public final class ObjectiveTypes {
         @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
         public void onPickup(EntityPickupItemEvent event) {
             if (event.getEntity() instanceof Player player) {
-                ItemStack stack = event.getItem().getItemStack();
+                Item item = event.getItem();
+                ItemStack stack = item.getItemStack();
                 Material type = stack.getType();
-                tracker.progress(player, this, v -> anyOrContains(v, ITEM, type), stack.getAmount());
+                // Thrown by any player (not just this one), so items cannot be passed back and forth between friends.
+                boolean recycled = item.getThrower() != null || placed.isRecycledDrop(item);
+                tracker.progress(player, this, v -> (!recycled || v.get(COUNT_DROPPED)) && anyOrContains(v, ITEM, type), stack.getAmount());
             }
         }
     }

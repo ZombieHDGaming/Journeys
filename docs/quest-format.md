@@ -81,13 +81,28 @@ re-checks periodically, so you can gate progress on things like permissions.
 | Type                     | Parameters                                          |
 |--------------------------|-----------------------------------------------------|
 | `journeys:kill_entity`   | `entity`: entity types, empty for any               |
-| `journeys:break_block`   | `block`: blocks, empty for any                      |
-| `journeys:place_block`   | `block`: blocks, empty for any                      |
-| `journeys:collect_item`  | `item`: items picked up, empty for any              |
+| `journeys:break_block`   | `block`: blocks, empty for any; `count-placed` (false) |
+| `journeys:place_block`   | `block`: blocks, empty for any; `subtract-on-break` (true) |
+| `journeys:collect_item`  | `item`: items picked up, empty for any; `count-dropped` (false) |
 | `journeys:craft_item`    | `item`: items crafted, empty for any                |
 | `journeys:fish`          | `item`: items caught, empty for any                 |
 | `journeys:reach_location`| `world`, `x`, `y`, `z`, `radius` (3), `name`        |
 | `journeys:talk_to_npc`   | `npc`: FancyNPCs NPC names (only with FancyNPCs)    |
+
+#### Anti-farming
+
+Journeys remembers which blocks players placed (stored in the world's chunk data, so it survives restarts and follows
+blocks moved by pistons). By default:
+
+- **break_block** ignores blocks placed by players, so placing and breaking the same block gains nothing. Fully grown
+  crops still count even though the player planted them, and trees grown from player-planted saplings count as
+  natural. Set `count-placed: true` for quests where breaking placed blocks is the point.
+- **place_block** counts placements *net of removals*: breaking a block you placed takes the progress back, as long as
+  the stage is still in progress. Set `subtract-on-break: false` to disable this.
+- **collect_item** ignores items thrown by any player and items dropped by breaking player-placed blocks. Set
+  `count-dropped: true` to count them.
+
+Blocks placed before Journeys was installed are not known and count as natural.
 
 ### Conditions
 

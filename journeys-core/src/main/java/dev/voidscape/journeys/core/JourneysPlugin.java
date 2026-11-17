@@ -6,6 +6,7 @@ import dev.voidscape.journeys.api.type.ConditionType;
 import dev.voidscape.journeys.api.type.ElementType;
 import dev.voidscape.journeys.api.type.ObjectiveType;
 import dev.voidscape.journeys.api.type.RewardType;
+import dev.voidscape.journeys.core.block.PlacedBlockTracker;
 import dev.voidscape.journeys.core.command.JourneysCommand;
 import dev.voidscape.journeys.core.config.Messages;
 import dev.voidscape.journeys.core.config.PluginConfig;
@@ -48,6 +49,7 @@ public final class JourneysPlugin extends JavaPlugin {
     private static final String EXAMPLE_QUEST = "quests/example_woodcutter.yml";
 
     private @Nullable ProgressStorage storage;
+    private @Nullable PlacedBlockTracker placedBlocks;
     private @Nullable QuestEngine engine;
     private @Nullable IntegrationManager integrations;
     private @Nullable Registries registries;
@@ -88,11 +90,15 @@ public final class JourneysPlugin extends JavaPlugin {
         this.engine = engine;
         holders.onMembershipChange(engine::loadPlayer);
 
-        ObjectiveTypes.all(engine).forEach(registries.objectives()::register);
+        PlacedBlockTracker placedBlocks = new PlacedBlockTracker(this);
+        this.placedBlocks = placedBlocks;
+        getServer().getPluginManager().registerEvents(placedBlocks, this);
+
+        ObjectiveTypes.all(engine, placedBlocks).forEach(registries.objectives()::register);
         ConditionTypes.all(() -> engine).forEach(registries.conditions()::register);
         RewardTypes.all().forEach(registries.rewards()::register);
 
-        api = new JourneysApiImpl(quests, engine, engine, holders, registries);
+        api = new JourneysApiImpl(quests, engine, engine, holders, placedBlocks, registries);
         Journeys.register(api);
         getServer().getServicesManager().register(JourneysApi.class, api, this, ServicePriority.Normal);
 
@@ -128,6 +134,9 @@ public final class JourneysPlugin extends JavaPlugin {
         }
         if (storage != null) {
             storage.close();
+        }
+        if (placedBlocks != null) {
+            placedBlocks.flushAll();
         }
         if (registries != null) {
             ((SimpleTypeRegistry<?>) registries.objectives()).clear();

@@ -20,6 +20,9 @@ and an open API for new objective, condition and reward types.
 - **Solo or party progress.** Progress belongs to a *holder*: a player, or a party supplied by a party plugin through the
   API.
 - **SQLite, MySQL or MariaDB** storage with versioned schema migrations, async IO and batched autosaves.
+- **Anti-farming.** Player-placed blocks are tracked in chunk data, so break, place and collect objectives cannot be
+  farmed by placing and breaking the same block or dropping and picking up items. Other plugins can use the same
+  tracker through `JourneysApi#placedBlocks()`.
 - **FancyNPCs hook.** `talk_to_npc` objectives and NPC quest givers.
 
 ## Requirements

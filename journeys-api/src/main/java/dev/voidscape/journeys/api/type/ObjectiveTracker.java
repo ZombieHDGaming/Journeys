@@ -17,4 +17,13 @@ public interface ObjectiveTracker {
      * @return how many objectives were advanced
      */
     int progress(Player player, ObjectiveType type, Predicate<ParameterValues> matcher, int amount);
+
+    /**
+     * Takes progress away, for objectives that count something which can be undone, such as placing a block that is
+     * later broken. Only objectives in a stage that is still in progress are affected; progress never drops below 0.
+     * No {@link dev.voidscape.journeys.api.event.ObjectiveProgressEvent} is fired.
+     *
+     * @return how many objectives lost progress
+     */
+    int regress(Player player, ObjectiveType type, Predicate<ParameterValues> matcher, int amount);
 }

@@ -541,6 +541,53 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
         return advanced;
     }
 
+    @Override
+    public int regress(Player player, ObjectiveType type, Predicate<ParameterValues> matcher, int amount) {
+        if (amount < 1) {
+            return 0;
+        }
+        int regressed = 0;
+        for (QuestHolder holderRef : holders.holdersOf(player.getUniqueId())) {
+            LoadedHolder entry = loaded.get(holderRef.id());
+            if (entry == null) {
+                continue;
+            }
+            for (QuestState state : entry.quests.values()) {
+                // Once a stage is complete its result stands; only progress still being worked on can be undone.
+                if (!state.status.isActive() || state.stageComplete || state.stageId == null) {
+                    continue;
+                }
+                Optional<QuestDefinition> quest = quests.get(state.questId);
+                Optional<QuestStage> stage = quest.flatMap(def -> def.stage(state.stageId));
+                if (stage.isEmpty()) {
+                    continue;
+                }
+                for (ConfiguredObjective objective : stage.get().objectives()) {
+                    int current = state.objectives.getOrDefault(objective.id(), 0);
+                    if (current <= 0 || !objective.type().equals(type.key()) || !safeMatch(matcher, quest.get(), stage.get(), objective)) {
+                        continue;
+                    }
+                    int updated = Math.max(0, current - amount);
+                    state.objectives.put(objective.id(), updated);
+                    state.touch();
+                    regressed++;
+                    announceProgress(player, entry.holder, quest.get(), objective, updated, texts.goal(objective));
+                }
+            }
+        }
+        return regressed;
+    }
+
+    private boolean safeMatch(Predicate<ParameterValues> matcher, QuestDefinition def, QuestStage stage, ConfiguredObjective objective) {
+        try {
+            return matcher.test(objective.params());
+        } catch (RuntimeException e) {
+            reportOnce(def.id() + "/" + stage.id() + "/" + objective.id(),
+                    "Objective " + objective.id() + " in quest " + def.id() + " stage " + stage.id() + " failed to match: " + e.getMessage());
+            return false;
+        }
+    }
+
     private int progressStage(QuestHolder holder, QuestDefinition def, QuestStage stage, QuestState state, Player player,
                               ObjectiveType type, Predicate<ParameterValues> matcher, int amount) {
         int advanced = 0;
@@ -548,15 +595,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
             if (!objective.type().equals(type.key()) || !QuestFlow.accepts(stage, objective, state.objectives, texts::goal)) {
                 continue;
             }
-            boolean matches;
-            try {
-                matches = matcher.test(objective.params());
-            } catch (RuntimeException e) {
-                reportOnce(def.id() + "/" + stage.id() + "/" + objective.id(),
-                        "Objective " + objective.id() + " in quest " + def.id() + " stage " + stage.id() + " failed to match: " + e.getMessage());
-                continue;
-            }
-            if (!matches) {
+            if (!safeMatch(matcher, def, stage, objective)) {
                 continue;
             }
             int current = state.objectives.getOrDefault(objective.id(), 0);
