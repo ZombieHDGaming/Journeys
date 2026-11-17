@@ -35,6 +35,25 @@ working example with a player choice and a conditional branch.
 | `hidden`          | `false` | Not shown in the quest log.                                                      |
 | `permission`      | `false` | Also require the permission `journeys.quest.<id>` to start.                     |
 | `board`           |         | See [Quest board](#quest-board).                                                 |
+| `bossbar`         |         | See [Boss bar](#boss-bar).                                                       |
+
+### Boss bar
+
+Each player tracks one active quest: they pick it with right-click in their quest log or `/journeys track <quest>`.
+Starting a quest with a boss bar tracks it automatically, as does starting any quest while nothing is tracked. When the
+tracked quest has its boss bar enabled, the player sees it with the current objective and how far through the stage
+they are.
+
+```yaml
+settings:
+  bossbar:
+    enabled: true
+    color: green          # pink, blue, red, green, yellow, purple, white
+    overlay: notched_10   # progress (solid), notched_6, notched_10, notched_12, notched_20
+    mode: always          # always, or on-progress: shown for a few seconds after progress (config.yml)
+```
+
+The bar text is `bossbar.title` in `messages.yml`.
 
 ### Quest board
 
@@ -144,6 +163,7 @@ requirements and the other way round.
 | `journeys:quest_stage`     | `quest`, `stage`, `current-only` (false): reached that stage in the current or latest run   |
 | `journeys:quest_branch`    | `quest`, `stage`, `choice`: in the current or latest run, left `stage` towards `choice` (a stage id, `@complete` or `@fail`) |
 | `journeys:min_level`       | `level`                                                                                     |
+| `journeys:placeholder`     | `placeholder`, `operator` (`=`), `value`: compare any PlaceholderAPI value, e.g. `%vault_eco_balance%` `>=` `1000`. Numbers compare numerically; text ignores case. Needs PlaceholderAPI. |
 
 See [`example_lumber_baron.yml`](../journeys-core/src/main/resources/quests/example_lumber_baron.yml) for a quest that
 unlocks only after a particular branch of another quest.
@@ -156,6 +176,27 @@ unlocks only after a particular branch of another quest.
 | `journeys:experience` | `amount`, `levels` (false)                                  |
 | `journeys:item`       | `item`, `amount` (1), `name` (MiniMessage)                  |
 | `journeys:message`    | `message` (MiniMessage, `<player>` available)               |
+
+## PlaceholderAPI
+
+With PlaceholderAPI installed:
+
+- `%placeholders%` work in `messages.yml`, quest and stage names and descriptions, choice labels, condition
+  descriptions, and the `command` and `message` rewards. They are filled in for the player who sees the text.
+- The `journeys:placeholder` condition gates quests and branches on any placeholder.
+- Journeys registers these placeholders (names use legacy color codes, which scoreboards understand):
+
+| Placeholder | Value |
+|---|---|
+| `%journeys_active_count%` | Active quests |
+| `%journeys_completed_count%` | Different quests completed |
+| `%journeys_tracked%` | Tracked quest id |
+| `%journeys_tracked_name%`, `%journeys_tracked_stage_name%` | Tracked quest and stage names |
+| `%journeys_tracked_objective%`, `%journeys_tracked_objective_progress%` | Current objective, and e.g. `3/10` |
+| `%journeys_tracked_progress%` | Percent through the current stage |
+| `%journeys_quest_<id>_status%` | `active`, `completed`, `failed`, `abandoned` or `none` |
+| `%journeys_quest_<id>_stage%`, `%journeys_quest_<id>_stage_name%` | Current stage id and name |
+| `%journeys_quest_<id>_completions%`, `%journeys_quest_<id>_progress%` | Times completed; percent through the stage |
 
 ## Integration properties
 

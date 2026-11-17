@@ -176,6 +176,11 @@ public final class QuestEditorMenu extends EditorMenu {
                     refresh();
                 }));
 
+        set(43, Items.of(Material.DRAGON_HEAD).name("<yellow>Boss bar")
+                .lore(d.bossBar.enabled() ? "<green>Enabled" : "<red>Disabled")
+                .lore("").lore(hint("Click", "edit"))
+                .button(click -> new BossBarEditorMenu(ctx, session, viewer, this).open()));
+
         // Actions
         backButton(45);
         set(47, Items.of(Material.SPYGLASS).name("<aqua>Validate").lore(hint("Click", "list problems in chat"))

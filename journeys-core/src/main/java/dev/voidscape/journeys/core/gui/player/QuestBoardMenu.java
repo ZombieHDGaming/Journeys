@@ -62,9 +62,9 @@ public final class QuestBoardMenu extends PaginatedMenu<BoardEntries.Entry> {
     @Override
     protected Component title() {
         if (category == null) {
-            return ctx.messages().get("gui.board.title");
+            return ctx.messages().get(viewer, "gui.board.title");
         }
-        return ctx.messages().get("gui.board.title-category", Text.parsed("category", ctx.categories().get(category).name()));
+        return ctx.messages().get(viewer, "gui.board.title-category", ctx.placeholders().parsed(viewer, "category", ctx.categories().get(category).name()));
     }
 
     @Override
@@ -77,28 +77,28 @@ public final class QuestBoardMenu extends PaginatedMenu<BoardEntries.Entry> {
         QuestDefinition quest = entry.quest();
         boolean startable = quest.settings().board().mode() == BoardSettings.BoardMode.START;
         Items item = (entry.status() == BoardEntries.Status.LOCKED ? Items.of(Material.IRON_BARS) : Items.of(quest.icon()))
-                .name(Text.parse(quest.displayName()))
-                .lore(Text.items(quest.description()))
+                .name(ctx.placeholders().parse(viewer, quest.displayName()))
+                .lore(ctx.placeholders().items(viewer, quest.description()))
                 .lore(Component.empty())
                 .glow(entry.status() == BoardEntries.Status.AVAILABLE && startable);
 
         switch (entry.status()) {
             case AVAILABLE -> item.lore(ctx.messages().item(startable ? "gui.board.available" : "gui.board.available-elsewhere"));
-            case ACTIVE -> item.lore(ctx.messages().item("gui.board.active"));
-            case COOLDOWN -> item.lore(ctx.messages().item("gui.board.cooldown", Text.unparsed("time",
+            case ACTIVE -> item.lore(ctx.messages().item(viewer, "gui.board.active"));
+            case COOLDOWN -> item.lore(ctx.messages().item(viewer, "gui.board.cooldown", Text.unparsed("time",
                     Durations.format(ctx.engine().cooldownRemaining(quest, entry.holder()).withNanos(0)))));
-            case COMPLETED -> item.lore(ctx.messages().item("gui.board.completed"));
-            case LOADING -> item.lore(ctx.messages().item("gui.board.loading"));
+            case COMPLETED -> item.lore(ctx.messages().item(viewer, "gui.board.completed"));
+            case LOADING -> item.lore(ctx.messages().item(viewer, "gui.board.loading"));
             case LOCKED -> {
-                item.lore(ctx.messages().item("gui.board.locked"));
+                item.lore(ctx.messages().item(viewer, "gui.board.locked"));
                 item.lore(requirementChecklist(entry));
             }
         }
 
         if (!quest.rewards().isEmpty() && entry.status() != BoardEntries.Status.COMPLETED) {
-            item.lore(Component.empty()).lore(ctx.messages().item("gui.board.rewards-header"));
+            item.lore(Component.empty()).lore(ctx.messages().item(viewer, "gui.board.rewards-header"));
             for (ConfiguredReward reward : quest.rewards()) {
-                item.lore(ctx.messages().item("gui.board.reward", Text.component("reward", ctx.engine().texts().reward(reward))));
+                item.lore(ctx.messages().item(viewer, "gui.board.reward", Text.component("reward", ctx.engine().texts().reward(reward))));
             }
         }
 
@@ -128,12 +128,12 @@ public final class QuestBoardMenu extends PaginatedMenu<BoardEntries.Entry> {
         if (quest.settings().requirePermission()) {
             boolean met = QuestEngine.hasQuestPermission(quest, viewer);
             lines.add(ctx.messages().item(met ? "gui.board.requirement-met" : "gui.board.requirement-missing",
-                    Text.component("requirement", ctx.messages().get("gui.board.permission-requirement"))));
+                    Text.component("requirement", ctx.messages().get(viewer, "gui.board.permission-requirement"))));
         }
         for (ConfiguredCondition condition : quest.requirements()) {
             boolean met = ctx.engine().test(condition, viewer, entry.holder());
             Component text = condition.description() != null
-                    ? Text.parse(condition.description())
+                    ? ctx.placeholders().parse(viewer, condition.description())
                     : ctx.engine().texts().condition(condition);
             lines.add(ctx.messages().item(met ? "gui.board.requirement-met" : "gui.board.requirement-missing",
                     Text.component("requirement", text)));
@@ -143,10 +143,10 @@ public final class QuestBoardMenu extends PaginatedMenu<BoardEntries.Entry> {
 
     @Override
     protected void controls() {
-        set(bottom() + 4, Items.of(Material.WRITABLE_BOOK).name(ctx.messages().item("gui.board.open-log"))
+        set(bottom() + 4, Items.of(Material.WRITABLE_BOOK).name(ctx.messages().item(viewer, "gui.board.open-log"))
                 .button(click -> new QuestLogMenu(ctx, viewer).open()));
         if (entries().isEmpty()) {
-            set(22, Items.of(Material.PAPER).name(ctx.messages().item("gui.board.empty")).display());
+            set(22, Items.of(Material.PAPER).name(ctx.messages().item(viewer, "gui.board.empty")).display());
         }
     }
 }

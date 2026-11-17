@@ -34,7 +34,7 @@ public final class ChoiceMenu extends Menu {
 
     @Override
     protected Component title() {
-        return ctx.messages().get("gui.choice.title", Text.parsed("quest", quest.displayName()));
+        return ctx.messages().get(viewer, "gui.choice.title", ctx.engine().questName(quest, viewer));
     }
 
     @Override
@@ -49,8 +49,8 @@ public final class ChoiceMenu extends Menu {
         for (Map.Entry<Integer, StageTransition> choice : choices.entrySet()) {
             String label = choice.getValue().label() == null ? choice.getValue().target().serialize() : choice.getValue().label();
             int index = choice.getKey();
-            set(slot++, Items.of(Material.OAK_SIGN).name(Text.parse(label))
-                    .lore(ctx.messages().item("gui.choice.hint"))
+            set(slot++, Items.of(Material.OAK_SIGN).name(ctx.placeholders().parse(viewer, label))
+                    .lore(ctx.messages().item(viewer, "gui.choice.hint"))
                     .button(click -> {
                         viewer.closeInventory();
                         if (!ctx.engine().choose(holder, quest.id(), index, viewer)) {

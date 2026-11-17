@@ -4,7 +4,9 @@ import dev.voidscape.journeys.api.JourneysApi;
 import dev.voidscape.journeys.api.block.PlacedBlocks;
 import dev.voidscape.journeys.api.holder.HolderService;
 import dev.voidscape.journeys.api.progress.QuestService;
+import dev.voidscape.journeys.api.progress.QuestTracking;
 import dev.voidscape.journeys.api.quest.QuestRepository;
+import dev.voidscape.journeys.api.text.Placeholders;
 import dev.voidscape.journeys.api.type.ConditionType;
 import dev.voidscape.journeys.api.type.ObjectiveTracker;
 import dev.voidscape.journeys.api.type.ObjectiveType;
@@ -21,6 +23,8 @@ record JourneysApiImpl(
         QuestService questService,
         ObjectiveTracker objectiveTracker,
         HolderService holders,
+        QuestTracking tracking,
+        Placeholders placeholders,
         PlacedBlocks placedBlocks,
         BiConsumer<Player, @Nullable String> boardOpener,
         Registries registries

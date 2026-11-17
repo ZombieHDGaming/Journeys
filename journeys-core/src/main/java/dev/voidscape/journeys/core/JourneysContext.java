@@ -5,8 +5,10 @@ import dev.voidscape.journeys.core.config.Categories;
 import dev.voidscape.journeys.core.config.Messages;
 import dev.voidscape.journeys.core.editor.EditorSessions;
 import dev.voidscape.journeys.core.engine.QuestEngine;
+import dev.voidscape.journeys.core.engine.QuestTrackingService;
 import dev.voidscape.journeys.core.gui.ChatPrompts;
 import dev.voidscape.journeys.core.quest.YamlQuestRepository;
+import dev.voidscape.journeys.core.text.PlaceholderService;
 import dev.voidscape.journeys.core.type.Registries;
 import org.bukkit.plugin.Plugin;
 
@@ -18,6 +20,8 @@ public record JourneysContext(
         Registries registries,
         HolderService holders,
         Messages messages,
+        PlaceholderService placeholders,
+        QuestTrackingService tracking,
         Categories categories,
         ChatPrompts prompts,
         EditorSessions editor

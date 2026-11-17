@@ -63,6 +63,17 @@ class QuestFlowTest {
     }
 
     @Test
+    void stageCompletionSumsGoalsOrTakesTheBestForAny() {
+        // Goals: a = 2, b = 1.
+        assertEquals(0.0, QuestFlow.stageCompletion(stageWith(ObjectiveMode.ALL), Map.of(), GOAL));
+        assertEquals(2.0 / 3, QuestFlow.stageCompletion(stageWith(ObjectiveMode.ALL), Map.of("a", 2), GOAL), 1e-9);
+        assertEquals(1.0, QuestFlow.stageCompletion(stageWith(ObjectiveMode.SEQUENTIAL), Map.of("a", 9, "b", 1), GOAL),
+                "progress past a goal is capped");
+        assertEquals(0.5, QuestFlow.stageCompletion(stageWith(ObjectiveMode.ANY), Map.of("a", 1), GOAL), 1e-9);
+        assertEquals(1.0, QuestFlow.stageCompletion(stage("e", ObjectiveMode.ALL, List.of(), BranchMode.AUTOMATIC, List.of()), Map.of(), GOAL));
+    }
+
+    @Test
     void firstAvailableTransitionWinsInOrder() {
         var transitions = List.of(to("x", "X", 9), to("y"), to("z"));
         OptionalInt picked = QuestFlow.firstAvailable(transitions, t -> t.conditions().isEmpty());

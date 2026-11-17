@@ -4,6 +4,7 @@ import dev.voidscape.journeys.api.type.Parameter;
 import dev.voidscape.journeys.api.type.ParameterTypes;
 import dev.voidscape.journeys.api.type.ParameterValues;
 import dev.voidscape.journeys.api.type.RewardType;
+import dev.voidscape.journeys.core.text.PlaceholderService;
 import dev.voidscape.journeys.core.text.Text;
 import java.util.List;
 import net.kyori.adventure.text.Component;
@@ -18,21 +19,25 @@ public final class RewardTypes {
     private RewardTypes() {
     }
 
-    public static List<RewardType> all() {
-        return List.of(new Command(), new Experience(), new Item(), new Message());
+    /** Command and message rewards fill in external placeholders (PlaceholderAPI) for the rewarded player. */
+    public static List<RewardType> all(PlaceholderService placeholders) {
+        return List.of(new Command(placeholders), new Experience(), new Item(), new Message(placeholders));
     }
 
     static final class Command extends BaseType implements RewardType {
         static final Parameter<String> COMMAND = Parameter.required("command",
                 Component.text("Console command, without /. {player} is replaced"), ParameterTypes.STRING);
 
-        Command() {
+        private final PlaceholderService placeholders;
+
+        Command(PlaceholderService placeholders) {
             super("command", "Run console command", "minecraft:command_block", COMMAND);
+            this.placeholders = placeholders;
         }
 
         @Override
         public void grant(Player player, ParameterValues values) {
-            String command = values.get(COMMAND).replace("{player}", player.getName());
+            String command = placeholders.apply(player, values.get(COMMAND).replace("{player}", player.getName()));
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.startsWith("/") ? command.substring(1) : command);
         }
 
@@ -101,13 +106,16 @@ public final class RewardTypes {
     static final class Message extends BaseType implements RewardType {
         static final Parameter<String> MESSAGE = Parameter.required("message", Component.text("MiniMessage text"), ParameterTypes.TEXT);
 
-        Message() {
+        private final PlaceholderService placeholders;
+
+        Message(PlaceholderService placeholders) {
             super("message", "Send message", "minecraft:oak_sign", MESSAGE);
+            this.placeholders = placeholders;
         }
 
         @Override
         public void grant(Player player, ParameterValues values) {
-            player.sendMessage(Text.parse(values.get(MESSAGE), Text.unparsed("player", player.getName())));
+            player.sendMessage(placeholders.parse(player, values.get(MESSAGE), Text.unparsed("player", player.getName())));
         }
 
         @Override

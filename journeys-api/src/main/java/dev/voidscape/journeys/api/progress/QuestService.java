@@ -41,6 +41,12 @@ public interface QuestService {
     /** Every quest the holder has a record for, including completed ones. Empty if not loaded. */
     Collection<QuestProgress> allProgress(QuestHolder holder);
 
+    /**
+     * How far through its current stage an active quest is, from 0 to 1: the share of the stage's goals reached
+     * ({@code any} stages use their best objective). 0 if the quest is not active.
+     */
+    double stageCompletion(QuestHolder holder, String questId);
+
     /** Whether the holder's progress is loaded and can be read or changed. */
     boolean isLoaded(QuestHolder holder);
 }

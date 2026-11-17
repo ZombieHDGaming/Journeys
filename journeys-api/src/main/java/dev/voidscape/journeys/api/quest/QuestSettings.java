@@ -16,6 +16,7 @@ import java.util.Objects;
  * @param requirePermission whether starting needs the permission {@link #permissionNode(String) journeys.quest.&lt;id&gt;},
  *                          on top of the quest's requirements
  * @param board             how the quest appears on the quest board
+ * @param bossBar           the boss bar shown while this quest is tracked
  */
 public record QuestSettings(
         boolean repeatable,
@@ -25,16 +26,18 @@ public record QuestSettings(
         boolean abandonable,
         boolean hidden,
         boolean requirePermission,
-        BoardSettings board
+        BoardSettings board,
+        BossBarSettings bossBar
 ) {
 
     public static final QuestSettings DEFAULT = new QuestSettings(false, Duration.ZERO, 0, HolderScope.SOLO, true, false,
-            false, BoardSettings.DEFAULT);
+            false, BoardSettings.DEFAULT, BossBarSettings.DEFAULT);
 
     public QuestSettings {
         Objects.requireNonNull(cooldown, "cooldown");
         Objects.requireNonNull(scope, "scope");
         Objects.requireNonNull(board, "board");
+        Objects.requireNonNull(bossBar, "bossBar");
         if (cooldown.isNegative()) {
             throw new IllegalArgumentException("cooldown must not be negative");
         }

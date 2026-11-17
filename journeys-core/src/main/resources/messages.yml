@@ -22,6 +22,12 @@ quest:
   choice-option: '  <dark_gray>»</dark_gray> <label>'
   choice-hover: '<gray>Click to choose'
 
+bossbar:
+  # <quest>, <stage>, <objective>, <progress>, <goal> (of the current objective), <percent> (of the stage)
+  title: '<quest> <dark_gray>»</dark_gray> <white><objective></white> <gray><progress>/<goal>'
+  # Stage done, waiting for the player to choose a path or for a transition's conditions. <quest>, <stage>
+  title-waiting: '<quest> <dark_gray>»</dark_gray> <yellow>Choose your path'
+
 start:
   # <quest>
   unknown-quest: '<prefix><red>There is no quest called <quest>.'
@@ -40,6 +46,9 @@ command:
   not-active: '<prefix><red>You are not on a quest called <quest>.'
   not-abandonable: '<prefix><red><quest><red> cannot be abandoned.'
   choose-failed: '<prefix><red>That choice is not available.'
+  # <quest>
+  tracked: '<prefix><gray>Now tracking <quest><gray>.'
+  untracked: '<prefix><gray>You are no longer tracking a quest.'
   # <quest>, <player>, <result>
   start-result: '<prefix><gray>Start <quest><gray> for <white><player></white>: <white><result>'
   # <count>
@@ -89,6 +98,9 @@ gui:
     objective: '<dark_gray>• <gray><objective> <white><progress>/<goal>'
     objective-done: '<green>✔ <dark_gray><st><objective></st>'
     choice-pending: '<yellow>Click to choose your path'
+    tracked: '<gold>★ Tracked'
+    track-hint: '<dark_gray>Right-click to track'
+    untrack-hint: '<dark_gray>Right-click to stop tracking'
     abandon-hint: '<dark_gray>Shift-right-click to abandon'
     # <quest>
     abandon-confirm: '<red>Abandon <quest><red>?'

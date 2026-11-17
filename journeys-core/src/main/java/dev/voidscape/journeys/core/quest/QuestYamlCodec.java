@@ -2,6 +2,7 @@ package dev.voidscape.journeys.core.quest;
 
 import dev.voidscape.journeys.api.holder.HolderScope;
 import dev.voidscape.journeys.api.quest.BoardSettings;
+import dev.voidscape.journeys.api.quest.BossBarSettings;
 import dev.voidscape.journeys.api.quest.BranchMode;
 import dev.voidscape.journeys.api.quest.ConfiguredCondition;
 import dev.voidscape.journeys.api.quest.ConfiguredObjective;
@@ -19,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.key.InvalidKeyException;
 import net.kyori.adventure.key.Key;
 import org.bukkit.configuration.ConfigurationSection;
@@ -87,7 +89,8 @@ public final class QuestYamlCodec {
                     section.getBoolean("abandonable", d.abandonable()),
                     section.getBoolean("hidden", d.hidden()),
                     section.getBoolean("permission", d.requirePermission()),
-                    decodeBoard(section.getConfigurationSection("board"))
+                    decodeBoard(section.getConfigurationSection("board")),
+                    decodeBossBar(section.getConfigurationSection("bossbar"))
             );
         } catch (IllegalArgumentException e) {
             throw new QuestFormatException("settings", e.getMessage());
@@ -103,6 +106,19 @@ public final class QuestYamlCodec {
                 section.getString("category", d.category()).trim().toLowerCase(Locale.ROOT),
                 enumValue(BoardSettings.BoardMode.class, section.getString("mode", d.mode().name()), "settings.board.mode"),
                 section.getBoolean("show-when-locked", d.showWhenLocked())
+        );
+    }
+
+    private static BossBarSettings decodeBossBar(@Nullable ConfigurationSection section) throws QuestFormatException {
+        if (section == null) {
+            return BossBarSettings.DEFAULT;
+        }
+        BossBarSettings d = BossBarSettings.DEFAULT;
+        return new BossBarSettings(
+                section.getBoolean("enabled", d.enabled()),
+                enumValue(BossBar.Color.class, section.getString("color", d.color().name()), "settings.bossbar.color"),
+                enumValue(BossBar.Overlay.class, section.getString("overlay", d.overlay().name()), "settings.bossbar.overlay"),
+                enumValue(BossBarSettings.Mode.class, section.getString("mode", d.mode().name()), "settings.bossbar.mode")
         );
     }
 
@@ -278,6 +294,11 @@ public final class QuestYamlCodec {
         board.set("category", s.board().category());
         board.set("mode", lower(s.board().mode()));
         board.set("show-when-locked", s.board().showWhenLocked());
+        ConfigurationSection bossBar = settings.createSection("bossbar");
+        bossBar.set("enabled", s.bossBar().enabled());
+        bossBar.set("color", lower(s.bossBar().color()));
+        bossBar.set("overlay", lower(s.bossBar().overlay()));
+        bossBar.set("mode", lower(s.bossBar().mode()).replace('_', '-'));
 
         root.set("start-stage", quest.startStage());
         root.set("requirements", quest.requirements().stream().map(QuestYamlCodec::encodeCondition).toList());

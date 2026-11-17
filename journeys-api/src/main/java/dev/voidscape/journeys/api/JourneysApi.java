@@ -3,7 +3,9 @@ package dev.voidscape.journeys.api;
 import dev.voidscape.journeys.api.block.PlacedBlocks;
 import dev.voidscape.journeys.api.holder.HolderService;
 import dev.voidscape.journeys.api.progress.QuestService;
+import dev.voidscape.journeys.api.progress.QuestTracking;
 import dev.voidscape.journeys.api.quest.QuestRepository;
+import dev.voidscape.journeys.api.text.Placeholders;
 import dev.voidscape.journeys.api.type.ConditionType;
 import dev.voidscape.journeys.api.type.ObjectiveTracker;
 import dev.voidscape.journeys.api.type.ObjectiveType;
@@ -32,6 +34,12 @@ public interface JourneysApi {
 
     /** Resolves who owns quest progress (a single player or a party). */
     HolderService holders();
+
+    /** The quest each player follows, shown on their boss bar and in placeholders. */
+    QuestTracking tracking();
+
+    /** External placeholder support (PlaceholderAPI) for player-facing text. */
+    Placeholders placeholders();
 
     /** Tracks player-placed blocks, for objectives that should not count place-and-break farming. */
     PlacedBlocks placedBlocks();

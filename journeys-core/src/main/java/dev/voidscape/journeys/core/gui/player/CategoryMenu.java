@@ -33,7 +33,7 @@ final class CategoryMenu extends PaginatedMenu<Categories.Category> {
 
     @Override
     protected Component title() {
-        return ctx.messages().get("gui.board.title");
+        return ctx.messages().get(viewer, "gui.board.title");
     }
 
     @Override
@@ -53,10 +53,10 @@ final class CategoryMenu extends PaginatedMenu<Categories.Category> {
     protected Button entry(Categories.Category category, int index) {
         int[] count = counts.getOrDefault(category.id(), new int[2]);
         return Items.of(category.icon())
-                .name(Text.parse(category.name()))
-                .lore(Text.items(category.description()))
+                .name(ctx.placeholders().parse(viewer, category.name()))
+                .lore(ctx.placeholders().items(viewer, category.description()))
                 .lore(Component.empty())
-                .lore(ctx.messages().item("gui.board.category-count",
+                .lore(ctx.messages().item(viewer, "gui.board.category-count",
                         Text.unparsed("available", Integer.toString(count[0])),
                         Text.unparsed("total", Integer.toString(count[1]))))
                 .glow(count[0] > 0)

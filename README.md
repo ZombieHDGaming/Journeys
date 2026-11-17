@@ -27,6 +27,10 @@ and an open API for new objective, condition and reward types.
 - **Anti-farming.** Player-placed blocks are tracked in chunk data, so break, place and collect objectives cannot be
   farmed by placing and breaking the same block or dropping and picking up items. Other plugins can use the same
   tracker through `JourneysApi#placedBlocks()`.
+- **Boss bar and tracking.** Players track a quest from their quest log; quests can show a configurable boss bar
+  with the current objective and stage progress.
+- **PlaceholderAPI.** Placeholders work in quest text, messages and rewards, a `placeholder` condition gates quests on
+  any placeholder, and `%journeys_...%` placeholders expose quest state to scoreboards and other plugins.
 - **FancyNPCs hook.** `talk_to_npc` objectives and NPC quest givers.
 
 ## Requirements
@@ -40,6 +44,7 @@ and an open API for new objective, condition and reward types.
 |------------------------------------------|----------------------------|---------|
 | `/journeys` (`/quests`), `/journeys log` | `journeys.command.log`     | everyone |
 | `/journeys board [category]`             | `journeys.command.board`   | everyone |
+| `/journeys track <quest>`, `/journeys untrack` | `journeys.command.track` | everyone |
 | `/journeys abandon <quest>`              | `journeys.command.abandon` | everyone |
 | `/journeys choose <quest> <option>`      | `journeys.command.choose`  | everyone (used by clickable choices) |
 | `/journeys start <quest> [player]`       | `journeys.command.start`   | op |
@@ -57,6 +62,7 @@ permission setting enabled also require `journeys.quest.<id>` (ops have it by de
 | `journeys-api`                   | Public API: quest model, type SPI, events, services. Other plugins compile against this. |
 | `journeys-core`                  | The plugin: engine, storage, YAML, GUI and editor, commands. |
 | `journeys-integration-fancynpcs` | FancyNPCs hook, shaded into the plugin jar and loaded only when FancyNPCs is installed. |
+| `journeys-integration-placeholderapi` | PlaceholderAPI hook, shaded in the same way. |
 
 Database drivers and HikariCP are not shaded; Paper downloads them at startup through `JourneysLoader`.
 

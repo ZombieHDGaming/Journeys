@@ -2,6 +2,7 @@ package dev.voidscape.journeys.core;
 
 import dev.voidscape.journeys.api.holder.HolderScope;
 import dev.voidscape.journeys.api.quest.BoardSettings;
+import dev.voidscape.journeys.api.quest.BossBarSettings;
 import dev.voidscape.journeys.api.quest.BranchMode;
 import dev.voidscape.journeys.api.quest.ConfiguredCondition;
 import dev.voidscape.journeys.api.quest.ConfiguredObjective;
@@ -17,6 +18,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.key.Key;
 
 /** Builds small quests for tests. */
@@ -54,7 +56,8 @@ public final class QuestFixtures {
         stages.put("right", stage("right", ObjectiveMode.ANY, List.of(), BranchMode.AUTOMATIC, List.of(to("@fail"))));
         return new QuestDefinition("branching", "<gold>Branching", List.of("<gray>A test quest"), Key.key("minecraft:book"),
                 new QuestSettings(true, Duration.ofHours(2), 3, HolderScope.PARTY, false, true, true,
-                        new BoardSettings("story", BoardSettings.BoardMode.VIEW, false)),
+                        new BoardSettings("story", BoardSettings.BoardMode.VIEW, false),
+                        new BossBarSettings(true, BossBar.Color.PURPLE, BossBar.Overlay.NOTCHED_10, BossBarSettings.Mode.ON_PROGRESS)),
                 "start", stages,
                 List.of(new ConfiguredCondition(Key.key("journeys:test_condition"), ParameterValues.of(Map.of("level", "2")), true,
                         "<gray>Be at least level 2")),

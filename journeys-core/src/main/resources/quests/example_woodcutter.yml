@@ -18,6 +18,11 @@ settings:
     category: jobs
     mode: start
     show-when-locked: true
+  bossbar:
+    enabled: true
+    color: green
+    overlay: notched_10
+    mode: always
 start-stage: gather
 requirements: []
 rewards:

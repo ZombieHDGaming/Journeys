@@ -16,6 +16,7 @@ subprojects {
         mavenCentral()
         maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://repo.fancyinnovations.com/releases")
+        maven("https://repo.extendedclip.com/releases/")
     }
 
     extensions.configure<JavaPluginExtension> {

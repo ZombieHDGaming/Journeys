@@ -30,6 +30,7 @@ import dev.voidscape.journeys.core.config.Messages;
 import dev.voidscape.journeys.core.quest.QuestTexts;
 import dev.voidscape.journeys.core.storage.ProgressStorage;
 import dev.voidscape.journeys.core.storage.QuestRecord;
+import dev.voidscape.journeys.core.text.PlaceholderService;
 import dev.voidscape.journeys.core.text.Text;
 import dev.voidscape.journeys.core.type.Registries;
 import java.time.Duration;
@@ -88,6 +89,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
     private final ProgressStorage storage;
     private final Messages messages;
     private final QuestTexts texts;
+    private final PlaceholderService placeholders;
     private final boolean progressActionBar;
     private final ExecutorService io;
 
@@ -107,7 +109,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
     }
 
     public QuestEngine(Plugin plugin, QuestRepository quests, Registries registries, HolderService holders,
-                       ProgressStorage storage, Messages messages, boolean progressActionBar) {
+                       ProgressStorage storage, Messages messages, PlaceholderService placeholders, boolean progressActionBar) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
         this.quests = quests;
@@ -115,9 +117,14 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
         this.holders = holders;
         this.storage = storage;
         this.messages = messages;
+        this.placeholders = placeholders;
         this.texts = new QuestTexts(registries);
         this.progressActionBar = progressActionBar;
         this.io = Executors.newFixedThreadPool(2, Thread.ofPlatform().name("Journeys IO ", 0).daemon(true).factory());
+    }
+
+    public Optional<QuestDefinition> questDefinition(String questId) {
+        return quests.get(questId);
     }
 
     public QuestTexts texts() {
@@ -375,6 +382,21 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
     }
 
     @Override
+    public double stageCompletion(QuestHolder holder, String questId) {
+        LoadedHolder entry = loaded.get(holder.id());
+        QuestState state = entry == null ? null : entry.quests.get(questId);
+        if (state == null || !state.status.isActive() || state.stageId == null) {
+            return 0;
+        }
+        if (state.stageComplete) {
+            return 1;
+        }
+        return quests.get(questId).flatMap(def -> def.stage(state.stageId))
+                .map(stage -> QuestFlow.stageCompletion(stage, state.objectives, texts::goal))
+                .orElse(0.0);
+    }
+
+    @Override
     public StartResult canStart(QuestHolder holder, String questId, @Nullable Player initiator) {
         Optional<QuestDefinition> quest = quests.get(questId);
         if (quest.isEmpty()) {
@@ -439,7 +461,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
                 state.visited.clear();
                 state.taken.clear();
                 for (Player member : onlineMembers(holder)) {
-                    messages.send(member, "quest.started", questName(def));
+                    messages.send(member, "quest.started", questName(def, member));
                 }
                 enterStage(holder, def, state, def.startStage(), null, initiator, 0);
             }
@@ -451,7 +473,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
     }
 
     private void notifyStartFailure(Player player, @Nullable QuestDefinition def, String questId, StartResult result, QuestHolder holder) {
-        TagResolver quest = def == null ? Text.unparsed("quest", questId) : questName(def);
+        TagResolver quest = def == null ? Text.unparsed("quest", questId) : questName(def, player);
         String key = "start." + result.name().toLowerCase(java.util.Locale.ROOT).replace('_', '-');
         TagResolver cooldown = Text.unparsed("time", def == null ? "" : dev.voidscape.journeys.core.util.Durations.format(
                 cooldownRemaining(def, holder).withNanos(0)));
@@ -468,7 +490,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
         endQuest(holder, state, QuestStatus.ABANDONED);
         quests.get(questId).ifPresent(def -> {
             for (Player member : onlineMembers(holder)) {
-                messages.send(member, "quest.abandoned", questName(def));
+                messages.send(member, "quest.abandoned", questName(def, member));
             }
             new QuestEndEvent(holder, def, QuestStatus.ABANDONED).callEvent();
         });
@@ -627,7 +649,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
 
     private void announceProgress(Player player, QuestHolder holder, QuestDefinition def, ConfiguredObjective objective, int progress, int goal) {
         TagResolver resolvers = TagResolver.resolver(
-                questName(def),
+                questName(def, player),
                 Text.component("objective", texts.objective(objective)),
                 Text.unparsed("progress", Integer.toString(progress)),
                 Text.unparsed("goal", Integer.toString(goal)));
@@ -658,9 +680,9 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
         state.touch();
         new QuestStageChangeEvent(holder, def, from, stage).callEvent();
         for (Player member : onlineMembers(holder)) {
-            messages.send(member, "quest.stage-started", questName(def), Text.parsed("stage", stage.displayName()));
+            messages.send(member, "quest.stage-started", questName(def, member), placeholders.parsed(member, "stage", stage.displayName()));
             for (String line : stage.description()) {
-                member.sendMessage(Text.parse(line));
+                member.sendMessage(placeholders.parse(member, line));
             }
         }
         if (QuestFlow.isStageComplete(stage, state.objectives, texts::goal)) {
@@ -711,7 +733,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
             case TransitionTarget.Fail ignored -> {
                 endQuest(holder, state, QuestStatus.FAILED);
                 for (Player member : onlineMembers(holder)) {
-                    messages.send(member, "quest.failed", questName(def));
+                    messages.send(member, "quest.failed", questName(def, member));
                 }
                 new QuestEndEvent(holder, def, QuestStatus.FAILED).callEvent();
             }
@@ -724,7 +746,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
         endQuest(holder, state, QuestStatus.COMPLETED);
         grant(holder, def.rewards());
         for (Player member : onlineMembers(holder)) {
-            messages.send(member, "quest.completed", questName(def));
+            messages.send(member, "quest.completed", questName(def, member));
         }
         new QuestEndEvent(holder, def, QuestStatus.COMPLETED).callEvent();
     }
@@ -743,13 +765,13 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
             if (choices.isEmpty()) {
                 continue;
             }
-            messages.send(member, "quest.choice-header", questName(def), Text.parsed("stage", stage.displayName()));
+            messages.send(member, "quest.choice-header", questName(def, member), placeholders.parsed(member, "stage", stage.displayName()));
             choices.forEach((index, transition) -> {
                 String command = "/journeys choose " + def.id() + " " + index;
-                Component line = messages.get("quest.choice-option",
-                                Text.parsed("label", transition.label() == null ? transition.target().serialize() : transition.label()))
+                Component line = messages.get(member, "quest.choice-option",
+                                placeholders.parsed(member, "label", transition.label() == null ? transition.target().serialize() : transition.label()))
                         .clickEvent(ClickEvent.runCommand(command))
-                        .hoverEvent(HoverEvent.showText(messages.get("quest.choice-hover")));
+                        .hoverEvent(HoverEvent.showText(messages.get(member, "quest.choice-hover")));
                 member.sendMessage(line);
             });
         }
@@ -824,8 +846,9 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
         return players;
     }
 
-    private static TagResolver questName(QuestDefinition def) {
-        return Text.parsed("quest", def.displayName());
+    /** The quest's display name as a {@code <quest>} tag, with the viewer's placeholders filled in. */
+    public TagResolver questName(QuestDefinition def, @Nullable Player viewer) {
+        return placeholders.parsed(viewer, "quest", def.displayName());
     }
 
     private void reportOnce(String key, String message) {

@@ -8,6 +8,7 @@ description = "The Journeys Paper plugin."
 dependencies {
     implementation(project(":journeys-api"))
     implementation(project(":journeys-integration-fancynpcs"))
+    implementation(project(":journeys-integration-placeholderapi"))
 
     compileOnly(libs.paper.api)
     // Downloaded at runtime by JourneysLoader through Paper's library loader, so they are not shaded.

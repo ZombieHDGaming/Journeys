@@ -56,6 +56,20 @@ public final class JourneysCommand {
                         .then(Commands.argument("category", StringArgumentType.word())
                                 .suggests(categories())
                                 .executes(c -> openBoard(c, StringArgumentType.getString(c, "category")))))
+                .then(Commands.literal("track")
+                        .requires(permission("journeys.command.track"))
+                        .then(Commands.argument("quest", StringArgumentType.word())
+                                .suggests(activeQuests())
+                                .executes(this::track)))
+                .then(Commands.literal("untrack")
+                        .requires(permission("journeys.command.track"))
+                        .executes(c -> {
+                            requirePlayer(c).ifPresent(player -> {
+                                ctx.tracking().track(player, null);
+                                ctx.messages().send(player, "command.untracked");
+                            });
+                            return Command.SINGLE_SUCCESS;
+                        }))
                 .then(Commands.literal("abandon")
                         .requires(permission("journeys.command.abandon"))
                         .then(Commands.argument("quest", StringArgumentType.word())
@@ -169,6 +183,21 @@ public final class JourneysCommand {
             return 0;
         }
         ctx.engine().abandon(holder.get(), questId);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int track(CommandContext<CommandSourceStack> c) {
+        Optional<Player> player = requirePlayer(c);
+        if (player.isEmpty()) {
+            return 0;
+        }
+        String questId = StringArgumentType.getString(c, "quest");
+        Optional<QuestDefinition> quest = ctx.quests().get(questId);
+        if (quest.isEmpty() || !ctx.tracking().track(player.get(), questId)) {
+            ctx.messages().send(player.get(), "command.not-active", Text.unparsed("quest", questId));
+            return 0;
+        }
+        ctx.messages().send(player.get(), "command.tracked", ctx.engine().questName(quest.get(), player.get()));
         return Command.SINGLE_SUCCESS;
     }
 

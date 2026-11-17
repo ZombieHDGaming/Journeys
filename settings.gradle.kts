@@ -14,4 +14,5 @@ include(
     "journeys-api",
     "journeys-core",
     "journeys-integration-fancynpcs",
+    "journeys-integration-placeholderapi",
 )

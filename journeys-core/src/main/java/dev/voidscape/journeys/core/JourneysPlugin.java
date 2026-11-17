@@ -7,12 +7,15 @@ import dev.voidscape.journeys.api.type.ElementType;
 import dev.voidscape.journeys.api.type.ObjectiveType;
 import dev.voidscape.journeys.api.type.RewardType;
 import dev.voidscape.journeys.core.block.PlacedBlockTracker;
+import dev.voidscape.journeys.core.bossbar.QuestBossBars;
 import dev.voidscape.journeys.core.command.JourneysCommand;
 import dev.voidscape.journeys.core.config.Categories;
 import dev.voidscape.journeys.core.config.Messages;
 import dev.voidscape.journeys.core.config.PluginConfig;
 import dev.voidscape.journeys.core.editor.EditorSessions;
+import dev.voidscape.journeys.core.engine.QuestChanges;
 import dev.voidscape.journeys.core.engine.QuestEngine;
+import dev.voidscape.journeys.core.engine.QuestTrackingService;
 import dev.voidscape.journeys.core.gui.ChatPrompts;
 import dev.voidscape.journeys.core.gui.LiveMenus;
 import dev.voidscape.journeys.core.gui.MenuListener;
@@ -22,6 +25,7 @@ import dev.voidscape.journeys.core.integration.IntegrationManager;
 import dev.voidscape.journeys.core.quest.QuestValidator;
 import dev.voidscape.journeys.core.quest.YamlQuestRepository;
 import dev.voidscape.journeys.core.storage.ProgressStorage;
+import dev.voidscape.journeys.core.text.PlaceholderService;
 import dev.voidscape.journeys.core.storage.sql.SqlProgressStorage;
 import dev.voidscape.journeys.core.type.Registries;
 import dev.voidscape.journeys.core.type.SimpleTypeRegistry;
@@ -58,6 +62,7 @@ public final class JourneysPlugin extends JavaPlugin {
     private @Nullable QuestEngine engine;
     private @Nullable IntegrationManager integrations;
     private @Nullable LiveMenus liveMenus;
+    private @Nullable QuestBossBars bossBars;
     private @Nullable Registries registries;
     private @Nullable JourneysApi api;
 
@@ -73,7 +78,8 @@ public final class JourneysPlugin extends JavaPlugin {
             return;
         }
 
-        Messages messages = new Messages(this);
+        PlaceholderService placeholders = new PlaceholderService(getLogger());
+        Messages messages = new Messages(this, placeholders);
         messages.load();
         Categories categories = new Categories(this);
         categories.load();
@@ -94,7 +100,7 @@ public final class JourneysPlugin extends JavaPlugin {
                 new SimpleTypeRegistry<RewardType>("reward", this::listen, this::unlisten));
         QuestValidator validator = new QuestValidator(registries);
         YamlQuestRepository quests = new YamlQuestRepository(getDataPath().resolve("quests"), validator, getLogger());
-        QuestEngine engine = new QuestEngine(this, quests, registries, holders, storage, messages, config.progressActionBar());
+        QuestEngine engine = new QuestEngine(this, quests, registries, holders, storage, messages, placeholders, config.progressActionBar());
         this.engine = engine;
         holders.onMembershipChange(engine::loadPlayer);
 
@@ -104,11 +110,16 @@ public final class JourneysPlugin extends JavaPlugin {
 
         ObjectiveTypes.all(engine, placedBlocks).forEach(registries.objectives()::register);
         ConditionTypes.all(() -> engine, holders, quests).forEach(registries.conditions()::register);
-        RewardTypes.all().forEach(registries.rewards()::register);
+        RewardTypes.all(placeholders).forEach(registries.rewards()::register);
+
+        QuestChanges changes = new QuestChanges(this);
+        getServer().getPluginManager().registerEvents(changes, this);
+        QuestTrackingService tracking = new QuestTrackingService(this, engine, quests, holders, changes);
+        getServer().getPluginManager().registerEvents(tracking, this);
 
         // Menus need the full context, which is built below; the API only calls this after enable.
         AtomicReference<JourneysContext> context = new AtomicReference<>();
-        api = new JourneysApiImpl(quests, engine, engine, holders, placedBlocks,
+        api = new JourneysApiImpl(quests, engine, engine, holders, tracking, placeholders, placedBlocks,
                 (player, category) -> QuestBoardMenu.open(context.get(), player, category, null), registries);
         Journeys.register(api);
         getServer().getServicesManager().register(JourneysApi.class, api, this, ServicePriority.Normal);
@@ -120,9 +131,12 @@ public final class JourneysPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(prompts, this);
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
         liveMenus = new LiveMenus(this);
-        liveMenus.start(config.liveRefreshSeconds());
+        liveMenus.start(changes, config.liveRefreshSeconds());
+        bossBars = new QuestBossBars(this, engine, tracking, messages, placeholders, config.bossBarProgressSeconds());
+        bossBars.start(changes);
 
-        JourneysContext ctx = new JourneysContext(this, engine, quests, registries, holders, messages, categories, prompts,
+        JourneysContext ctx = new JourneysContext(this, engine, quests, registries, holders, messages, placeholders, tracking,
+                categories, prompts,
                 new EditorSessions(quests, validator));
         context.set(ctx);
         Runnable reload = () -> {
@@ -145,6 +159,9 @@ public final class JourneysPlugin extends JavaPlugin {
     public void onDisable() {
         if (liveMenus != null) {
             liveMenus.stop();
+        }
+        if (bossBars != null) {
+            bossBars.stop();
         }
         if (integrations != null) {
             integrations.disableAll();

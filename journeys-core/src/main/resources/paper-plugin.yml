@@ -11,6 +11,10 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
+    PlaceholderAPI:
+      load: BEFORE
+      required: false
+      join-classpath: true
 
 permissions:
   journeys.command.log:
@@ -18,6 +22,9 @@ permissions:
     default: true
   journeys.command.board:
     description: Open the quest board.
+    default: true
+  journeys.command.track:
+    description: Choose which quest your boss bar and placeholders follow.
     default: true
   journeys.command.abandon:
     description: Abandon your own quests (when the quest allows it).
@@ -43,6 +50,7 @@ permissions:
     children:
       journeys.command.log: true
       journeys.command.board: true
+      journeys.command.track: true
       journeys.command.abandon: true
       journeys.command.choose: true
       journeys.command.start: true

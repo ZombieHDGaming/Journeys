@@ -67,12 +67,12 @@ public final class QuestLogMenu extends PaginatedMenu<QuestLogMenu.Entry> {
     protected Button entry(Entry entry, int index) {
         QuestDefinition quest = entry.quest();
         QuestProgress progress = entry.progress();
-        Items item = Items.of(quest.icon()).name(Text.parse(quest.displayName()));
-        item.lore(Text.items(quest.description()));
+        Items item = Items.of(quest.icon()).name(ctx.placeholders().parse(viewer, quest.displayName()));
+        item.lore(ctx.placeholders().items(viewer, quest.description()));
 
         if (history) {
             item.lore(Component.empty());
-            item.lore(ctx.messages().lines("gui.log.history-entry",
+            item.lore(ctx.messages().lines(viewer, "gui.log.history-entry",
                     Text.unparsed("status", progress.status().name().toLowerCase(java.util.Locale.ROOT)),
                     Text.unparsed("completions", Integer.toString(progress.completions()))));
             return item.display();
@@ -82,7 +82,7 @@ public final class QuestLogMenu extends PaginatedMenu<QuestLogMenu.Entry> {
         boolean choicePending = false;
         if (stage.isPresent()) {
             item.lore(Component.empty());
-            item.lore(ctx.messages().item("gui.log.stage", Text.parsed("stage", stage.get().displayName())));
+            item.lore(ctx.messages().item(viewer, "gui.log.stage", ctx.placeholders().parsed(viewer, "stage", stage.get().displayName())));
             for (ConfiguredObjective objective : stage.get().objectives()) {
                 int goal = ctx.engine().texts().goal(objective);
                 int current = Math.min(goal, progress.objectiveProgress(objective.id()));
@@ -93,22 +93,30 @@ public final class QuestLogMenu extends PaginatedMenu<QuestLogMenu.Entry> {
             }
             choicePending = progress.stageComplete() && stage.get().branchMode() == BranchMode.CHOICE;
             if (choicePending) {
-                item.lore(Component.empty()).lore(ctx.messages().item("gui.log.choice-pending"));
+                item.lore(Component.empty()).lore(ctx.messages().item(viewer, "gui.log.choice-pending"));
                 item.glow(true);
             }
         }
+        boolean tracked = ctx.tracking().tracked(viewer).filter(quest.id()::equals).isPresent();
+        if (tracked) {
+            item.lore(ctx.messages().item(viewer, "gui.log.tracked")).glow(true);
+        }
+        item.lore(ctx.messages().item(viewer, tracked ? "gui.log.untrack-hint" : "gui.log.track-hint"));
         boolean abandonable = quest.settings().abandonable();
         if (abandonable) {
-            item.lore(ctx.messages().item("gui.log.abandon-hint"));
+            item.lore(ctx.messages().item(viewer, "gui.log.abandon-hint"));
         }
 
         boolean choice = choicePending;
         return item.button(click -> {
             if (click.isShiftRight() && abandonable) {
-                new ConfirmMenu(viewer, this, ctx.messages().get("gui.log.abandon-confirm", Text.parsed("quest", quest.displayName())), () -> {
+                new ConfirmMenu(viewer, this, ctx.messages().get(viewer, "gui.log.abandon-confirm", ctx.engine().questName(quest, viewer)), () -> {
                     ctx.engine().abandon(entry.holder(), quest.id());
                     open();
                 }).open();
+            } else if (click.isRight()) {
+                ctx.tracking().track(viewer, tracked ? null : quest.id());
+                refresh();
             } else if (choice) {
                 new ChoiceMenu(ctx, viewer, this, entry.holder(), quest).open();
             }
@@ -123,7 +131,7 @@ public final class QuestLogMenu extends PaginatedMenu<QuestLogMenu.Entry> {
                     history = !history;
                     open(); // Re-open: the title changes with the tab.
                 }));
-        set(bottom() + 6, Items.of(Material.MAP).name(ctx.messages().item("gui.log.open-board"))
+        set(bottom() + 6, Items.of(Material.MAP).name(ctx.messages().item(viewer, "gui.log.open-board"))
                 .button(click -> QuestBoardMenu.open(ctx, viewer, null, this)));
     }
 }

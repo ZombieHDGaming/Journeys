@@ -2,6 +2,7 @@ package dev.voidscape.journeys.core.editor;
 
 import dev.voidscape.journeys.api.holder.HolderScope;
 import dev.voidscape.journeys.api.quest.BoardSettings;
+import dev.voidscape.journeys.api.quest.BossBarSettings;
 import dev.voidscape.journeys.api.quest.BranchMode;
 import dev.voidscape.journeys.api.quest.ConfiguredCondition;
 import dev.voidscape.journeys.api.quest.ConfiguredObjective;
@@ -41,6 +42,7 @@ public final class QuestDraft {
     public String category = BoardSettings.DEFAULT_CATEGORY;
     public BoardSettings.BoardMode boardMode = BoardSettings.DEFAULT.mode();
     public boolean showWhenLocked = BoardSettings.DEFAULT.showWhenLocked();
+    public BossBarSettings bossBar = BossBarSettings.DEFAULT;
     public String startStage;
     public final Map<String, StageDraft> stages = new LinkedHashMap<>();
     public final List<ElementDraft> requirements = new ArrayList<>();
@@ -72,6 +74,7 @@ public final class QuestDraft {
         draft.category = s.board().category();
         draft.boardMode = s.board().mode();
         draft.showWhenLocked = s.board().showWhenLocked();
+        draft.bossBar = s.bossBar();
         draft.startStage = quest.startStage();
         quest.stages().values().forEach(stage -> draft.stages.put(stage.id(), StageDraft.of(stage)));
         quest.requirements().forEach(c -> draft.requirements.add(ElementDraft.of(c)));
@@ -85,7 +88,7 @@ public final class QuestDraft {
         stages.forEach((id, stage) -> builtStages.put(id, stage.build()));
         return new QuestDefinition(id, displayName, description, icon,
                 new QuestSettings(repeatable, cooldown, maxCompletions, scope, abandonable, hidden, requirePermission,
-                        new BoardSettings(category, boardMode, showWhenLocked)),
+                        new BoardSettings(category, boardMode, showWhenLocked), bossBar),
                 startStage, builtStages,
                 requirements.stream().map(ElementDraft::toCondition).toList(),
                 rewards.stream().map(ElementDraft::toReward).toList(),

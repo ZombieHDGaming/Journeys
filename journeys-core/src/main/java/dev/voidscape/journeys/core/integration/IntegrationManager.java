@@ -19,7 +19,8 @@ public final class IntegrationManager {
 
     /** Target plugin name to integration class. Add new bundled hooks here. */
     private static final Map<String, String> BUNDLED = Map.of(
-            "FancyNpcs", "dev.voidscape.journeys.integration.fancynpcs.FancyNpcsIntegration"
+            "FancyNpcs", "dev.voidscape.journeys.integration.fancynpcs.FancyNpcsIntegration",
+            "PlaceholderAPI", "dev.voidscape.journeys.integration.placeholderapi.PlaceholderApiIntegration"
     );
 
     private final Plugin plugin;
