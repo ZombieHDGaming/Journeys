@@ -5,8 +5,11 @@ import dev.voidscape.journeys.api.progress.QuestStatus;
 import dev.voidscape.journeys.core.storage.QuestRecord;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
@@ -23,6 +26,8 @@ final class QuestState {
     int completions;
     long lastCompletedAt;
     final Map<String, Integer> objectives = new LinkedHashMap<>();
+    final Set<String> visited = new LinkedHashSet<>();
+    final Map<String, String> taken = new LinkedHashMap<>();
     boolean dirty;
 
     QuestState(UUID holderId, String questId) {
@@ -41,6 +46,8 @@ final class QuestState {
         state.completions = record.completions();
         state.lastCompletedAt = record.lastCompletedAt();
         state.objectives.putAll(record.objectives());
+        state.visited.addAll(record.visitedStages());
+        state.taken.putAll(record.transitionsTaken());
         return state;
     }
 
@@ -51,13 +58,14 @@ final class QuestState {
 
     QuestRecord toRecord() {
         return new QuestRecord(holderId, questId, status, stageId, stageComplete, startedAt, updatedAt, completions,
-                lastCompletedAt, objectives);
+                lastCompletedAt, objectives, List.copyOf(visited), taken);
     }
 
     QuestProgress snapshot() {
         return new Snapshot(holderId, questId, status, Optional.ofNullable(stageId), stageComplete, Map.copyOf(objectives),
                 Instant.ofEpochMilli(startedAt), completions,
-                lastCompletedAt > 0 ? Optional.of(Instant.ofEpochMilli(lastCompletedAt)) : Optional.empty());
+                lastCompletedAt > 0 ? Optional.of(Instant.ofEpochMilli(lastCompletedAt)) : Optional.empty(),
+                List.copyOf(visited), Map.copyOf(taken));
     }
 
     private record Snapshot(
@@ -69,7 +77,9 @@ final class QuestState {
             Map<String, Integer> objectiveProgress,
             Instant startedAt,
             int completions,
-            Optional<Instant> lastCompletedAt
+            Optional<Instant> lastCompletedAt,
+            List<String> visitedStages,
+            Map<String, String> transitionsTaken
     ) implements QuestProgress {
     }
 }

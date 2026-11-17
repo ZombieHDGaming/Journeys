@@ -11,6 +11,9 @@ import dev.voidscape.journeys.api.type.ObjectiveType;
 import dev.voidscape.journeys.api.type.RewardType;
 import dev.voidscape.journeys.api.type.TypeRegistry;
 import dev.voidscape.journeys.core.type.Registries;
+import java.util.function.BiConsumer;
+import org.bukkit.entity.Player;
+import org.jspecify.annotations.Nullable;
 
 /** The object handed to other plugins. */
 record JourneysApiImpl(
@@ -19,8 +22,14 @@ record JourneysApiImpl(
         ObjectiveTracker objectiveTracker,
         HolderService holders,
         PlacedBlocks placedBlocks,
+        BiConsumer<Player, @Nullable String> boardOpener,
         Registries registries
 ) implements JourneysApi {
+
+    @Override
+    public void openBoard(Player player, @Nullable String category) {
+        boardOpener.accept(player, category);
+    }
 
     @Override
     public TypeRegistry<ObjectiveType> objectiveTypes() {

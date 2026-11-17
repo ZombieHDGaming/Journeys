@@ -1,6 +1,7 @@
 package dev.voidscape.journeys.core.quest;
 
 import dev.voidscape.journeys.api.holder.HolderScope;
+import dev.voidscape.journeys.api.quest.BoardSettings;
 import dev.voidscape.journeys.api.quest.BranchMode;
 import dev.voidscape.journeys.api.quest.ConfiguredCondition;
 import dev.voidscape.journeys.api.quest.ConfiguredObjective;
@@ -84,11 +85,25 @@ public final class QuestYamlCodec {
                     section.getInt("max-completions", d.maxCompletions()),
                     enumValue(HolderScope.class, section.getString("scope", d.scope().name()), "settings.scope"),
                     section.getBoolean("abandonable", d.abandonable()),
-                    section.getBoolean("hidden", d.hidden())
+                    section.getBoolean("hidden", d.hidden()),
+                    section.getBoolean("permission", d.requirePermission()),
+                    decodeBoard(section.getConfigurationSection("board"))
             );
         } catch (IllegalArgumentException e) {
             throw new QuestFormatException("settings", e.getMessage());
         }
+    }
+
+    private static BoardSettings decodeBoard(@Nullable ConfigurationSection section) throws QuestFormatException {
+        if (section == null) {
+            return BoardSettings.DEFAULT;
+        }
+        BoardSettings d = BoardSettings.DEFAULT;
+        return new BoardSettings(
+                section.getString("category", d.category()).trim().toLowerCase(Locale.ROOT),
+                enumValue(BoardSettings.BoardMode.class, section.getString("mode", d.mode().name()), "settings.board.mode"),
+                section.getBoolean("show-when-locked", d.showWhenLocked())
+        );
     }
 
     private static QuestStage decodeStage(String id, ConfigurationSection section, String path) throws QuestFormatException {
@@ -147,7 +162,8 @@ public final class QuestYamlCodec {
             conditions.add(new ConfiguredCondition(
                     requiredKey(section, key + "[" + i + "]"),
                     params(section.getConfigurationSection("params")),
-                    section.getBoolean("negate", false)
+                    section.getBoolean("negate", false),
+                    section.getString("description")
             ));
         }
         return conditions;
@@ -257,6 +273,11 @@ public final class QuestYamlCodec {
         settings.set("scope", lower(s.scope()));
         settings.set("abandonable", s.abandonable());
         settings.set("hidden", s.hidden());
+        settings.set("permission", s.requirePermission());
+        ConfigurationSection board = settings.createSection("board");
+        board.set("category", s.board().category());
+        board.set("mode", lower(s.board().mode()));
+        board.set("show-when-locked", s.board().showWhenLocked());
 
         root.set("start-stage", quest.startStage());
         root.set("requirements", quest.requirements().stream().map(QuestYamlCodec::encodeCondition).toList());
@@ -308,6 +329,9 @@ public final class QuestYamlCodec {
         map.put("type", condition.type().asString());
         if (condition.negate()) {
             map.put("negate", true);
+        }
+        if (condition.description() != null) {
+            map.put("description", condition.description());
         }
         putParams(map, condition.params());
         return map;

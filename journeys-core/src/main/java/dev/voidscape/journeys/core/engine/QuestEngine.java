@@ -16,6 +16,7 @@ import dev.voidscape.journeys.api.quest.ConfiguredObjective;
 import dev.voidscape.journeys.api.quest.ConfiguredReward;
 import dev.voidscape.journeys.api.quest.QuestDefinition;
 import dev.voidscape.journeys.api.quest.QuestRepository;
+import dev.voidscape.journeys.api.quest.QuestSettings;
 import dev.voidscape.journeys.api.quest.QuestStage;
 import dev.voidscape.journeys.api.quest.StageTransition;
 import dev.voidscape.journeys.api.quest.TransitionTarget;
@@ -398,7 +399,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
                 return StartResult.ON_COOLDOWN;
             }
         }
-        if (initiator != null && !conditionsPass(def.requirements(), initiator, holder)) {
+        if (initiator != null && !meetsRequirements(def, initiator, holder)) {
             return StartResult.REQUIREMENTS_NOT_MET;
         }
         return StartResult.STARTED;
@@ -434,6 +435,8 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
                 state.status = QuestStatus.ACTIVE;
                 state.startedAt = System.currentTimeMillis();
                 state.stageId = null;
+                state.visited.clear();
+                state.taken.clear();
                 for (Player member : onlineMembers(holder)) {
                     messages.send(member, "quest.started", questName(def));
                 }
@@ -645,6 +648,7 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
         state.stageId = stage.id();
         state.stageComplete = false;
         state.objectives.clear();
+        state.visited.add(stage.id());
         state.touch();
         new QuestStageChangeEvent(holder, def, from, stage).callEvent();
         for (Player member : onlineMembers(holder)) {
@@ -693,6 +697,8 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
 
     private void follow(QuestHolder holder, QuestDefinition def, QuestStage from, QuestState state, StageTransition transition,
                         @Nullable Player trigger, int depth) {
+        state.taken.put(from.id(), transition.target().serialize());
+        state.touch();
         switch (transition.target()) {
             case TransitionTarget.ToStage(String stageId) -> enterStage(holder, def, state, stageId, from, trigger, depth + 1);
             case TransitionTarget.Complete ignored -> completeQuest(holder, def, state);
@@ -745,25 +751,40 @@ public final class QuestEngine implements QuestService, ObjectiveTracker, Listen
 
     // ------------------------------------------------------------------ helpers
 
+    /** The quest's requirements plus, if enabled, its {@code journeys.quest.<id>} permission. */
+    public boolean meetsRequirements(QuestDefinition def, Player player, QuestHolder holder) {
+        return hasQuestPermission(def, player) && conditionsPass(def.requirements(), player, holder);
+    }
+
+    /** True when the quest does not require its permission, or the player has it. */
+    public static boolean hasQuestPermission(QuestDefinition def, Player player) {
+        return !def.settings().requirePermission() || player.hasPermission(QuestSettings.permissionNode(def.id()));
+    }
+
     private boolean conditionsPass(List<ConfiguredCondition> conditions, Player player, QuestHolder holder) {
         for (ConfiguredCondition condition : conditions) {
-            Optional<ConditionType> type = registries.conditions().get(condition.type());
-            if (type.isEmpty()) {
-                reportOnce("condition/" + condition.type(), "Unknown condition type " + condition.type().asString() + "; treating it as failed");
-                return false;
-            }
-            boolean result;
-            try {
-                result = type.get().test(player, holder, condition.params());
-            } catch (RuntimeException e) {
-                logger.log(Level.WARNING, "Condition " + condition.type().asString() + " threw; treating it as failed", e);
-                return false;
-            }
-            if (result == condition.negate()) {
+            if (!test(condition, player, holder)) {
                 return false;
             }
         }
         return true;
+    }
+
+    /** Evaluates one condition, including negation. Unknown or failing types count as not passed. */
+    public boolean test(ConfiguredCondition condition, Player player, QuestHolder holder) {
+        Optional<ConditionType> type = registries.conditions().get(condition.type());
+        if (type.isEmpty()) {
+            reportOnce("condition/" + condition.type(), "Unknown condition type " + condition.type().asString() + "; treating it as failed");
+            return false;
+        }
+        boolean result;
+        try {
+            result = type.get().test(player, holder, condition.params());
+        } catch (RuntimeException e) {
+            logger.log(Level.WARNING, "Condition " + condition.type().asString() + " threw; treating it as failed", e);
+            return false;
+        }
+        return result != condition.negate();
     }
 
     private void grant(QuestHolder holder, List<ConfiguredReward> rewards) {

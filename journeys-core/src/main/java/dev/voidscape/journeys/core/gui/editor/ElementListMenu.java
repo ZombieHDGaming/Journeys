@@ -57,6 +57,9 @@ final class ElementListMenu extends PaginatedMenu<ElementDraft> {
         Items item = type.<Items>map(t -> Items.of(t.icon())).orElseGet(() -> Items.of(Material.BARRIER))
                 .name(condition && element.negate ? Text.parse("<red>NOT </red>").append(description) : description)
                 .lore("<dark_gray>" + element.type.asString());
+        if (condition && element.description != null) {
+            item.lore(Text.parse("<gray>Players see: ").append(Text.parse(element.description)));
+        }
         element.params.forEach((key, value) -> item.lore(Component.text(key + " = " + value)));
         if (type.isEmpty()) {
             item.lore("<red>Unknown type");

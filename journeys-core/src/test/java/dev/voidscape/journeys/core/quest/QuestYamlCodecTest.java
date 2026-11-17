@@ -64,6 +64,35 @@ class QuestYamlCodecTest {
     }
 
     @Test
+    void bundledGatedExampleParses() throws Exception {
+        YamlConfiguration yaml;
+        try (var in = new InputStreamReader(Objects.requireNonNull(
+                getClass().getResourceAsStream("/quests/example_lumber_baron.yml")), StandardCharsets.UTF_8)) {
+            yaml = YamlConfiguration.loadConfiguration(in);
+        }
+        QuestDefinition quest = QuestYamlCodec.decode("example_lumber_baron", yaml);
+        assertEquals("story", quest.settings().board().category());
+        assertEquals(false, quest.settings().board().showWhenLocked());
+        assertEquals(2, quest.requirements().size());
+        assertEquals("<gray>Sell your own wood for the woodcutter", quest.requirements().getFirst().description());
+        assertEquals(quest, roundTrip(quest));
+    }
+
+    @Test
+    void missingBoardSettingsUseDefaults() throws Exception {
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.loadFromString("""
+                settings:
+                  repeatable: true
+                stages:
+                  only: {}
+                """);
+        QuestDefinition quest = QuestYamlCodec.decode("q", yaml);
+        assertEquals(dev.voidscape.journeys.api.quest.BoardSettings.DEFAULT, quest.settings().board());
+        assertEquals(false, quest.settings().requirePermission());
+    }
+
+    @Test
     void typeKeysDefaultToTheJourneysNamespace() throws Exception {
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.loadFromString("""

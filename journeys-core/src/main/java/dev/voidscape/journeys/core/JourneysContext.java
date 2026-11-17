@@ -1,6 +1,7 @@
 package dev.voidscape.journeys.core;
 
 import dev.voidscape.journeys.api.holder.HolderService;
+import dev.voidscape.journeys.core.config.Categories;
 import dev.voidscape.journeys.core.config.Messages;
 import dev.voidscape.journeys.core.editor.EditorSessions;
 import dev.voidscape.journeys.core.engine.QuestEngine;
@@ -17,6 +18,7 @@ public record JourneysContext(
         Registries registries,
         HolderService holders,
         Messages messages,
+        Categories categories,
         ChatPrompts prompts,
         EditorSessions editor
 ) {

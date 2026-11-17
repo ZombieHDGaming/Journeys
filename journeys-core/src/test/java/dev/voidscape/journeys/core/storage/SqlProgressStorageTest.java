@@ -46,8 +46,10 @@ class SqlProgressStorageTest {
     @Test
     void savesAndLoadsRecords() throws Exception {
         UUID holder = UUID.randomUUID();
-        QuestRecord active = new QuestRecord(holder, "q1", QuestStatus.ACTIVE, "gather", false, 10, 20, 0, 0, Map.of("logs", 4, "planks", 1));
-        QuestRecord done = new QuestRecord(holder, "q2", QuestStatus.COMPLETED, null, false, 1, 2, 3, 2, Map.of());
+        QuestRecord active = new QuestRecord(holder, "q1", QuestStatus.ACTIVE, "gather", false, 10, 20, 0, 0, Map.of("logs", 4, "planks", 1),
+                List.of("start", "gather"), Map.of("start", "gather"));
+        QuestRecord done = new QuestRecord(holder, "q2", QuestStatus.COMPLETED, null, false, 1, 2, 3, 2, Map.of(),
+                List.of("a", "b"), Map.of("a", "b", "b", "@complete"));
         storage.save(List.of(active, done));
 
         List<QuestRecord> loaded = storage.load(holder);
@@ -60,8 +62,9 @@ class SqlProgressStorageTest {
     @Test
     void savingAgainReplacesObjectiveProgress() throws Exception {
         UUID holder = UUID.randomUUID();
-        storage.save(List.of(new QuestRecord(holder, "q", QuestStatus.ACTIVE, "a", false, 1, 1, 0, 0, Map.of("x", 1, "y", 2))));
-        QuestRecord next = new QuestRecord(holder, "q", QuestStatus.ACTIVE, "b", true, 1, 5, 0, 0, Map.of("z", 7));
+        storage.save(List.of(new QuestRecord(holder, "q", QuestStatus.ACTIVE, "a", false, 1, 1, 0, 0, Map.of("x", 1, "y", 2), List.of(), Map.of())));
+        QuestRecord next = new QuestRecord(holder, "q", QuestStatus.ACTIVE, "b", true, 1, 5, 0, 0, Map.of("z", 7),
+                List.of("a", "b"), Map.of("a", "b"));
         storage.save(List.of(next));
 
         assertEquals(List.of(next), storage.load(holder));
@@ -70,7 +73,7 @@ class SqlProgressStorageTest {
     @Test
     void migrationsAreIdempotent() throws Exception {
         UUID holder = UUID.randomUUID();
-        storage.save(List.of(new QuestRecord(holder, "q", QuestStatus.FAILED, null, false, 1, 1, 0, 0, Map.of())));
+        storage.save(List.of(new QuestRecord(holder, "q", QuestStatus.FAILED, null, false, 1, 1, 0, 0, Map.of(), List.of(), Map.of())));
         storage.close();
 
         storage = open();

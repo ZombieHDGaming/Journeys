@@ -1,5 +1,7 @@
 package dev.voidscape.journeys.core;
 
+import dev.voidscape.journeys.api.holder.HolderScope;
+import dev.voidscape.journeys.api.quest.BoardSettings;
 import dev.voidscape.journeys.api.quest.BranchMode;
 import dev.voidscape.journeys.api.quest.ConfiguredCondition;
 import dev.voidscape.journeys.api.quest.ConfiguredObjective;
@@ -11,6 +13,7 @@ import dev.voidscape.journeys.api.quest.QuestStage;
 import dev.voidscape.journeys.api.quest.StageTransition;
 import dev.voidscape.journeys.api.quest.TransitionTarget;
 import dev.voidscape.journeys.api.type.ParameterValues;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +53,11 @@ public final class QuestFixtures {
                 List.of(to("@complete"))));
         stages.put("right", stage("right", ObjectiveMode.ANY, List.of(), BranchMode.AUTOMATIC, List.of(to("@fail"))));
         return new QuestDefinition("branching", "<gold>Branching", List.of("<gray>A test quest"), Key.key("minecraft:book"),
-                QuestSettings.DEFAULT, "start", stages,
-                List.of(new ConfiguredCondition(Key.key("journeys:test_condition"), ParameterValues.of(Map.of("level", "2")), true)),
+                new QuestSettings(true, Duration.ofHours(2), 3, HolderScope.PARTY, false, true, true,
+                        new BoardSettings("story", BoardSettings.BoardMode.VIEW, false)),
+                "start", stages,
+                List.of(new ConfiguredCondition(Key.key("journeys:test_condition"), ParameterValues.of(Map.of("level", "2")), true,
+                        "<gray>Be at least level 2")),
                 List.of(new ConfiguredReward(Key.key("journeys:test_reward"), ParameterValues.empty())),
                 Map.of("fancynpcs.givers", "bob"));
     }

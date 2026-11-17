@@ -11,6 +11,10 @@ and an open API for new objective, condition and reward types.
 - **Branching quests.** A quest is a graph of stages. Each stage has objectives (all, any, or in sequence) and
   transitions that lead to other stages, to completion, or to failure, chosen automatically by conditions or picked by
   the player from clickable chat or a menu.
+- **Quest board.** `/journeys board` lets players browse quests by category, see what is available, on cooldown or
+  locked (with a ✔/✖ checklist of requirements), and accept quests with a click. NPCs can open a category's board.
+- **Progression gating.** Lock quests behind permissions, earlier quests, a number of completed quests, a stage reached,
+  or the branch a player chose in an earlier quest. Locked quests can be shown with their requirements or kept secret.
 - **In-game editor.** `/journeys editor` edits everything: text, settings, stages, objectives, transitions, conditions
   and rewards. It works from each type's declared parameters, so types added by other plugins appear in it automatically.
 - **Plain YAML files.** One file per quest in `plugins/Journeys/quests/`. The editor writes the same files, so quests can
@@ -35,6 +39,7 @@ and an open API for new objective, condition and reward types.
 | Command                                  | Permission                 | Default |
 |------------------------------------------|----------------------------|---------|
 | `/journeys` (`/quests`), `/journeys log` | `journeys.command.log`     | everyone |
+| `/journeys board [category]`             | `journeys.command.board`   | everyone |
 | `/journeys abandon <quest>`              | `journeys.command.abandon` | everyone |
 | `/journeys choose <quest> <option>`      | `journeys.command.choose`  | everyone (used by clickable choices) |
 | `/journeys start <quest> [player]`       | `journeys.command.start`   | op |
@@ -42,7 +47,8 @@ and an open API for new objective, condition and reward types.
 | `/journeys list`                         | `journeys.command.list`    | op |
 | `/journeys reload`                       | `journeys.command.reload`  | op |
 
-`journeys.admin` grants all of the above and lets admins abandon quests marked as not abandonable.
+`journeys.admin` grants all of the above and lets admins abandon quests marked as not abandonable. Quests with the
+permission setting enabled also require `journeys.quest.<id>` (ops have it by default).
 
 ## Project layout
 

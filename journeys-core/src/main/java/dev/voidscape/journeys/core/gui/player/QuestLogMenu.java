@@ -118,5 +118,7 @@ public final class QuestLogMenu extends PaginatedMenu<QuestLogMenu.Entry> {
                     history = !history;
                     open(); // Re-open: the title changes with the tab.
                 }));
+        set(bottom() + 6, Items.of(Material.MAP).name(ctx.messages().item("gui.log.open-board"))
+                .button(click -> QuestBoardMenu.open(ctx, viewer, null, this)));
     }
 }

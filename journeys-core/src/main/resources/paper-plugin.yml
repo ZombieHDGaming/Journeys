@@ -16,6 +16,9 @@ permissions:
   journeys.command.log:
     description: Open the quest log.
     default: true
+  journeys.command.board:
+    description: Open the quest board.
+    default: true
   journeys.command.abandon:
     description: Abandon your own quests (when the quest allows it).
     default: true
@@ -39,6 +42,7 @@ permissions:
     default: op
     children:
       journeys.command.log: true
+      journeys.command.board: true
       journeys.command.abandon: true
       journeys.command.choose: true
       journeys.command.start: true

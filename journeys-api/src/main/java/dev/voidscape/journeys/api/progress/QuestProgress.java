@@ -1,6 +1,7 @@
 package dev.voidscape.journeys.api.progress;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,4 +38,13 @@ public interface QuestProgress {
     int completions();
 
     Optional<Instant> lastCompletedAt();
+
+    /** Stages entered during the current (or most recent) run, in order of first visit. */
+    List<String> visitedStages();
+
+    /**
+     * Transitions taken during the current (or most recent) run: stage id to the target taken from it (another stage
+     * id, {@code @complete} or {@code @fail}). If a stage was left more than once, the latest is kept.
+     */
+    Map<String, String> transitionsTaken();
 }

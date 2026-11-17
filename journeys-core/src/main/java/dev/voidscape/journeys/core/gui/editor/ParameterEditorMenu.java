@@ -1,9 +1,11 @@
 package dev.voidscape.journeys.core.gui.editor;
 
+import dev.voidscape.journeys.api.type.ConditionType;
 import dev.voidscape.journeys.api.type.ElementType;
 import dev.voidscape.journeys.api.type.Parameter;
 import dev.voidscape.journeys.api.type.ParameterTypes;
 import dev.voidscape.journeys.core.JourneysContext;
+import dev.voidscape.journeys.core.editor.QuestDraft.ElementDraft;
 import dev.voidscape.journeys.core.editor.QuestDraft.ParameterizedDraft;
 import dev.voidscape.journeys.core.gui.Button;
 import dev.voidscape.journeys.core.gui.Items;
@@ -13,6 +15,7 @@ import dev.voidscape.journeys.core.text.Text;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 
@@ -84,6 +87,35 @@ final class ParameterEditorMenu extends PaginatedMenu<Parameter<?>> {
                 ask(parameter, value);
             }
         });
+    }
+
+    /** Conditions also get a player-facing description, shown on the quest board's requirement checklist. */
+    @Override
+    protected void controls() {
+        if (!(target instanceof ElementDraft condition) || !(type instanceof ConditionType)) {
+            return;
+        }
+        set(bottom() + 4, Items.of(Material.WRITABLE_BOOK).name("<yellow>Description for players")
+                .lore(condition.description == null ? Component.text("(generated: ").append(type.displayName()).append(Component.text(")"))
+                        : Text.parse(condition.description))
+                .lore("<dark_gray>Shown on the quest board, e.g. 'Reach the Miner rank'")
+                .lore("").lore(EditorMenu.hint("Left-click", "set (MiniMessage)")).lore(EditorMenu.hint("Right-click", "clear"))
+                .button(click -> {
+                    if (click.isRight()) {
+                        condition.description = null;
+                        refresh();
+                        return;
+                    }
+                    ctx.prompts().ask(viewer, Text.parse("<gold>» </gold>Type the requirement as players should see it (MiniMessage)"), input -> {
+                        try {
+                            ParameterTypes.TEXT.parse(input);
+                            condition.description = input;
+                        } catch (IllegalArgumentException e) {
+                            viewer.sendMessage(Text.parse("<red>✖ </red>").append(Component.text(String.valueOf(e.getMessage()))));
+                        }
+                        open();
+                    }, this::open);
+                }));
     }
 
     private void ask(Parameter<?> parameter, @Nullable String current) {

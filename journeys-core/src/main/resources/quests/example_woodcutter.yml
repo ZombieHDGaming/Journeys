@@ -13,6 +13,11 @@ settings:
   scope: solo
   abandonable: true
   hidden: false
+  permission: false
+  board:
+    category: jobs
+    mode: start
+    show-when-locked: true
 start-stage: gather
 requirements: []
 rewards:

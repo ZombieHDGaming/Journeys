@@ -54,7 +54,31 @@ editor:
   prompt-cancel-hint: '<dark_gray>Type <white>cancel</white> to go back.'
 
 gui:
+  board:
+    title: '<dark_gray>Quest board'
+    # <category>
+    title-category: '<dark_gray>Quests » <category>'
+    # <available>, <total>
+    category-count: '<green><available> available</green> <dark_gray>· <gray><total> quests'
+    available: '<green>Click to accept'
+    available-elsewhere: '<yellow>Available. Find out where to begin it.'
+    active: '<aqua>In progress <dark_gray>(click to open your quest log)'
+    # <time>
+    cooldown: '<gold>Available again in <time>'
+    completed: '<dark_green>✔ Completed'
+    loading: '<gray>Loading your progress...'
+    locked: '<red>🔒 Locked. Requires:'
+    # <requirement>
+    requirement-met: ' <green>✔</green> <gray><requirement>'
+    requirement-missing: ' <red>✖</red> <white><requirement>'
+    permission-requirement: 'Special access'
+    rewards-header: '<gold>Rewards:'
+    # <reward>
+    reward: ' <dark_gray>•</dark_gray> <gray><reward>'
+    open-log: '<yellow>Your quest log'
+    empty: '<gray>No quests here right now.'
   log:
+    open-board: '<yellow>Quest board'
     title-active: '<dark_gray>Quest log'
     title-history: '<dark_gray>Quest history'
     show-history: '<yellow>Show history'

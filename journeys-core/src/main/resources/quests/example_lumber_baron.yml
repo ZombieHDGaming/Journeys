@@ -1,0 +1,50 @@
+# Example of progression gating: this quest only unlocks for players who sold the wood themselves in
+# example_woodcutter, and it stays hidden from the board until then. Delete this file if you don't need it.
+
+display-name: '<gold>The Lumber Baron'
+description:
+  - '<gray>Word of your timber trade has spread.'
+  - '<gray>A merchant wants to meet you.'
+icon: minecraft:emerald
+settings:
+  repeatable: false
+  cooldown: 0s
+  max-completions: 0
+  scope: solo
+  abandonable: true
+  hidden: false
+  permission: false
+  board:
+    category: story
+    mode: start
+    show-when-locked: false
+start-stage: meet
+requirements:
+  - type: journeys:quest_branch
+    description: '<gray>Sell your own wood for the woodcutter'
+    params:
+      quest: example_woodcutter
+      stage: gather
+      choice: sell
+  - type: journeys:completed_count
+    description: '<gray>Finish 1 odd job'
+    params:
+      amount: 1
+      category: jobs
+rewards:
+  - type: journeys:item
+    params:
+      item: emerald
+      amount: 3
+stages:
+  meet:
+    display-name: '<yellow>Stock the warehouse'
+    objective-mode: all
+    objectives:
+      - id: logs
+        type: journeys:break_block
+        amount: 32
+        params:
+          block: [oak_log, birch_log, spruce_log]
+    branch-mode: automatic
+    transitions: []

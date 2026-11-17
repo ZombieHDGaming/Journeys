@@ -1,6 +1,9 @@
 package dev.voidscape.journeys.core.gui.editor;
 
 import dev.voidscape.journeys.api.holder.HolderScope;
+import dev.voidscape.journeys.api.quest.BoardSettings;
+import dev.voidscape.journeys.api.quest.QuestIds;
+import dev.voidscape.journeys.api.quest.QuestSettings;
 import dev.voidscape.journeys.api.type.ParameterTypes;
 import dev.voidscape.journeys.core.JourneysContext;
 import dev.voidscape.journeys.core.editor.EditorSessions;
@@ -132,6 +135,46 @@ public final class QuestEditorMenu extends EditorMenu {
         set(32, Items.of(Material.CHEST).name("<gold><bold>Completion rewards").lore("<gray>" + d.rewards.size() + " reward(s)")
                 .lore("").lore(hint("Click", "edit"))
                 .button(click -> new ElementListMenu(ctx, session, viewer, this, Registries.Kind.REWARD, d.rewards, "Rewards").open()));
+
+        // Quest board and access
+        set(37, Items.of(Material.BOOKSHELF).name("<yellow>Board category")
+                .lore(Text.parse(ctx.categories().get(d.category).name())).lore("<dark_gray>" + d.category)
+                .lore("<dark_gray>Names and icons are set in categories.yml").lore("")
+                .lore(hint("Click", "change"))
+                .button(click -> prompt("Type a category id, e.g. story, daily, mining"
+                        + (ctx.categories().ids().isEmpty() ? "" : " <gray>(configured: " + String.join(", ", ctx.categories().ids()) + ")"),
+                        d.category, input -> {
+                    String id = input.toLowerCase(Locale.ROOT);
+                    if (!QuestIds.isValid(id)) {
+                        return "Category ids may only contain lowercase letters, digits, _ and -";
+                    }
+                    d.category = id;
+                    return null;
+                })));
+        set(38, Items.of(switch (d.boardMode) {
+                    case HIDDEN -> Material.GRAY_DYE;
+                    case VIEW -> Material.ITEM_FRAME;
+                    case START -> Material.MAP;
+                }).name("<yellow>On the quest board")
+                .lore("<white>" + d.boardMode.name().toLowerCase(Locale.ROOT))
+                .lore("<dark_gray>hidden: not listed")
+                .lore("<dark_gray>view: listed, started elsewhere (NPC, command)")
+                .lore("<dark_gray>start: listed and started by clicking it")
+                .lore("").lore(hint("Click", "cycle"))
+                .button(click -> {
+                    BoardSettings.BoardMode[] modes = BoardSettings.BoardMode.values();
+                    d.boardMode = modes[(d.boardMode.ordinal() + 1) % modes.length];
+                    refresh();
+                }));
+        set(39, toggle("Show on board while locked", d.showWhenLocked, () -> d.showWhenLocked = !d.showWhenLocked));
+        set(41, Items.of(d.requirePermission ? Material.IRON_DOOR : Material.OAK_DOOR).name("<yellow>Require permission")
+                .lore(d.requirePermission ? "<green>Yes" : "<red>No")
+                .lore("<dark_gray>Players need " + QuestSettings.permissionNode(d.id))
+                .lore("").lore(hint("Click", "toggle"))
+                .button(click -> {
+                    d.requirePermission = !d.requirePermission;
+                    refresh();
+                }));
 
         // Actions
         backButton(45);

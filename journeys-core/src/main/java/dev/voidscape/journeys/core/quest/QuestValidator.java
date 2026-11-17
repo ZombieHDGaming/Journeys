@@ -63,6 +63,9 @@ public final class QuestValidator {
             error(issues, "start-stage", "stage '" + quest.startStage() + "' does not exist");
         }
 
+        if (!QuestIds.isValid(quest.settings().board().category())) {
+            error(issues, "settings.board.category", "category must match " + QuestIds.PATTERN.pattern());
+        }
         checkConditions(issues, "requirements", quest.requirements());
         checkRewards(issues, "rewards", quest.rewards());
 

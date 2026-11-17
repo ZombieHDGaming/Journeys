@@ -5,6 +5,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import dev.voidscape.journeys.api.progress.QuestStatus;
 import dev.voidscape.journeys.core.config.PluginConfig.StorageSettings;
 import dev.voidscape.journeys.core.storage.ProgressStorage;
+import dev.voidscape.journeys.core.storage.QuestPath;
 import dev.voidscape.journeys.core.storage.QuestRecord;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -95,6 +96,10 @@ public final class SqlProgressStorage implements ProgressStorage {
                                 + "objective_id VARCHAR(64) NOT NULL,"
                                 + "progress INT NOT NULL,"
                                 + "PRIMARY KEY (holder_id, quest_id, objective_id))"
+                },
+                // 2: stage and branch history, used by the quest_stage and quest_branch conditions.
+                new String[]{
+                        "ALTER TABLE " + table("quest_progress") + " ADD COLUMN path TEXT"
                 }
         );
     }
@@ -150,7 +155,7 @@ public final class SqlProgressStorage implements ProgressStorage {
                 }
             }
             try (PreparedStatement ps = connection.prepareStatement(
-                    "SELECT quest_id, status, stage_id, stage_complete, started_at, updated_at, completions, last_completed_at FROM "
+                    "SELECT quest_id, status, stage_id, stage_complete, started_at, updated_at, completions, last_completed_at, path FROM "
                             + table("quest_progress") + " WHERE holder_id = ?")) {
                 ps.setString(1, holder);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -163,9 +168,10 @@ public final class SqlProgressStorage implements ProgressStorage {
                             logger.warning("Skipping progress of " + holder + " on " + questId + ": unknown status " + rs.getString(2));
                             continue;
                         }
+                        QuestPath.Path path = QuestPath.decode(rs.getString(9));
                         records.add(new QuestRecord(holderId, questId, status, rs.getString(3), rs.getBoolean(4),
                                 rs.getLong(5), rs.getLong(6), rs.getInt(7), rs.getLong(8),
-                                objectives.getOrDefault(questId, Map.of())));
+                                objectives.getOrDefault(questId, Map.of()), path.visited(), path.taken()));
                     }
                 }
             }
@@ -200,6 +206,7 @@ public final class SqlProgressStorage implements ProgressStorage {
                     upsert.setLong(7, record.updatedAt());
                     upsert.setInt(8, record.completions());
                     upsert.setLong(9, record.lastCompletedAt());
+                    upsert.setString(10, QuestPath.encode(record.visitedStages(), record.transitionsTaken()));
                     upsert.addBatch();
 
                     clear.setString(1, holder);

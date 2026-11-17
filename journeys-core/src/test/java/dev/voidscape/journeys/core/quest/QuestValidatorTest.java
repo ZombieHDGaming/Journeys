@@ -89,6 +89,18 @@ class QuestValidatorTest {
     }
 
     @Test
+    void invalidBoardCategoryIsAnError() {
+        QuestDefinition base = QuestFixtures.branching();
+        var s = base.settings();
+        QuestDefinition quest = new QuestDefinition(base.id(), base.displayName(), base.description(), base.icon(),
+                new dev.voidscape.journeys.api.quest.QuestSettings(s.repeatable(), s.cooldown(), s.maxCompletions(), s.scope(),
+                        s.abandonable(), s.hidden(), s.requirePermission(),
+                        new dev.voidscape.journeys.api.quest.BoardSettings("Bad Category!", s.board().mode(), true)),
+                base.startStage(), base.stages(), base.requirements(), base.rewards(), base.properties());
+        assertTrue(has(validator.validate(quest), QuestValidator.Severity.ERROR, "settings.board.category"));
+    }
+
+    @Test
     void missingStartStageIsAnError() {
         QuestDefinition base = QuestFixtures.branching();
         QuestDefinition quest = new QuestDefinition(base.id(), base.displayName(), base.description(), base.icon(), base.settings(),

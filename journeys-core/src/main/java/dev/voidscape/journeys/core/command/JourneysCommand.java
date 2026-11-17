@@ -12,6 +12,7 @@ import dev.voidscape.journeys.api.progress.StartResult;
 import dev.voidscape.journeys.api.quest.QuestDefinition;
 import dev.voidscape.journeys.core.JourneysContext;
 import dev.voidscape.journeys.core.gui.editor.EditorHomeMenu;
+import dev.voidscape.journeys.core.gui.player.QuestBoardMenu;
 import dev.voidscape.journeys.core.gui.player.QuestLogMenu;
 import dev.voidscape.journeys.core.quest.QuestValidator;
 import dev.voidscape.journeys.core.text.Text;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jspecify.annotations.Nullable;
 
 /** {@code /journeys} (aliases {@code /quests}, {@code /quest}), built with Brigadier. */
 public final class JourneysCommand {
@@ -48,6 +50,12 @@ public final class JourneysCommand {
                 .then(Commands.literal("log")
                         .requires(permission("journeys.command.log"))
                         .executes(this::openLog))
+                .then(Commands.literal("board")
+                        .requires(permission("journeys.command.board"))
+                        .executes(c -> openBoard(c, null))
+                        .then(Commands.argument("category", StringArgumentType.word())
+                                .suggests(categories())
+                                .executes(c -> openBoard(c, StringArgumentType.getString(c, "category")))))
                 .then(Commands.literal("abandon")
                         .requires(permission("journeys.command.abandon"))
                         .then(Commands.argument("quest", StringArgumentType.word())
@@ -96,6 +104,23 @@ public final class JourneysCommand {
             ctx.quests().all().stream().map(QuestDefinition::id).filter(id -> id.startsWith(remaining)).forEach(builder::suggest);
             return builder.buildFuture();
         };
+    }
+
+    private SuggestionProvider<CommandSourceStack> categories() {
+        return (c, builder) -> {
+            String remaining = builder.getRemainingLowerCase();
+            ctx.quests().all().stream()
+                    .map(q -> q.settings().board().category())
+                    .distinct()
+                    .filter(id -> id.startsWith(remaining))
+                    .forEach(builder::suggest);
+            return builder.buildFuture();
+        };
+    }
+
+    private int openBoard(CommandContext<CommandSourceStack> c, @Nullable String category) {
+        requirePlayer(c).ifPresent(player -> QuestBoardMenu.open(ctx, player, category == null ? null : category.toLowerCase(Locale.ROOT), null));
+        return Command.SINGLE_SUCCESS;
     }
 
     private SuggestionProvider<CommandSourceStack> activeQuests() {

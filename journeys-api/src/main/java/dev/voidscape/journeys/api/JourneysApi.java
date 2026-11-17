@@ -9,6 +9,8 @@ import dev.voidscape.journeys.api.type.ObjectiveTracker;
 import dev.voidscape.journeys.api.type.ObjectiveType;
 import dev.voidscape.journeys.api.type.RewardType;
 import dev.voidscape.journeys.api.type.TypeRegistry;
+import org.bukkit.entity.Player;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Entry point for other plugins.
@@ -33,6 +35,13 @@ public interface JourneysApi {
 
     /** Tracks player-placed blocks, for objectives that should not count place-and-break farming. */
     PlacedBlocks placedBlocks();
+
+    /**
+     * Opens the quest board for a player.
+     *
+     * @param category a category id to open directly, or null for the full board
+     */
+    void openBoard(Player player, @Nullable String category);
 
     TypeRegistry<ObjectiveType> objectiveTypes();
 

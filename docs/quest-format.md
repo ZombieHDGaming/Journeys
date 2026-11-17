@@ -33,6 +33,23 @@ working example with a player choice and a conditional branch.
 | `scope`           | `solo`  | `solo`, or `party` to share progress with the player's party (needs a provider). |
 | `abandonable`     | `true`  | Players may abandon it themselves.                                               |
 | `hidden`          | `false` | Not shown in the quest log.                                                      |
+| `permission`      | `false` | Also require the permission `journeys.quest.<id>` to start.                     |
+| `board`           |         | See [Quest board](#quest-board).                                                 |
+
+### Quest board
+
+Players browse quests with `/journeys board` (or the button in their quest log). Each quest's `settings.board` controls
+how it appears there:
+
+| Key                | Default   | Meaning                                                                                       |
+|--------------------|-----------|-----------------------------------------------------------------------------------------------|
+| `category`         | `general` | Category id. Names, icons and order come from `categories.yml`.                               |
+| `mode`             | `start`   | `hidden` (not listed), `view` (listed, started elsewhere) or `start` (click to accept).      |
+| `show-when-locked` | `true`    | Show the quest with a ✔/✖ checklist of its requirements while locked, or hide it until unlocked. |
+
+The board opens on a category list when quests span more than one category. `/journeys board <category>` opens one
+category directly. To make an NPC open a board, give it a FancyNPCs action:
+`/npc action <npc> interact add player_command journeys board <category>`.
 
 ## Stages
 
@@ -106,13 +123,30 @@ Blocks placed before Journeys was installed are not known and count as natural.
 
 ### Conditions
 
-Every condition accepts `negate: true` to invert it.
+Every condition accepts `negate: true` to invert it, and an optional `description` (MiniMessage) that players see on
+the quest board's requirement checklist instead of the generated text:
 
-| Type                       | Parameters                              |
-|----------------------------|-----------------------------------------|
-| `journeys:permission`      | `permission`                            |
-| `journeys:quest_completed` | `quest`, `times` (1)                    |
-| `journeys:min_level`       | `level`                                 |
+```yaml
+requirements:
+  - type: journeys:permission
+    description: '<gray>Reach the <gold>Miner</gold> rank'
+    params: { permission: ranks.miner }
+```
+
+Quest-progress conditions check every holder the player belongs to, so solo progress counts towards a party quest's
+requirements and the other way round.
+
+| Type                       | Parameters                                                                                  |
+|----------------------------|---------------------------------------------------------------------------------------------|
+| `journeys:permission`      | `permission`                                                                                |
+| `journeys:quest_completed` | `quest`, `times` (1)                                                                        |
+| `journeys:completed_count` | `amount`, `category` (any), `count-repeats` (false): completed N different quests          |
+| `journeys:quest_stage`     | `quest`, `stage`, `current-only` (false): reached that stage in the current or latest run   |
+| `journeys:quest_branch`    | `quest`, `stage`, `choice`: in the current or latest run, left `stage` towards `choice` (a stage id, `@complete` or `@fail`) |
+| `journeys:min_level`       | `level`                                                                                     |
+
+See [`example_lumber_baron.yml`](../journeys-core/src/main/resources/quests/example_lumber_baron.yml) for a quest that
+unlocks only after a particular branch of another quest.
 
 ### Rewards
 

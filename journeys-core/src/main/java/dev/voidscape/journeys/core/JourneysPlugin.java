@@ -8,12 +8,14 @@ import dev.voidscape.journeys.api.type.ObjectiveType;
 import dev.voidscape.journeys.api.type.RewardType;
 import dev.voidscape.journeys.core.block.PlacedBlockTracker;
 import dev.voidscape.journeys.core.command.JourneysCommand;
+import dev.voidscape.journeys.core.config.Categories;
 import dev.voidscape.journeys.core.config.Messages;
 import dev.voidscape.journeys.core.config.PluginConfig;
 import dev.voidscape.journeys.core.editor.EditorSessions;
 import dev.voidscape.journeys.core.engine.QuestEngine;
 import dev.voidscape.journeys.core.gui.ChatPrompts;
 import dev.voidscape.journeys.core.gui.MenuListener;
+import dev.voidscape.journeys.core.gui.player.QuestBoardMenu;
 import dev.voidscape.journeys.core.holder.SimpleHolderService;
 import dev.voidscape.journeys.core.integration.IntegrationManager;
 import dev.voidscape.journeys.core.quest.QuestValidator;
@@ -29,6 +31,8 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
@@ -46,7 +50,7 @@ import org.jspecify.annotations.Nullable;
  */
 public final class JourneysPlugin extends JavaPlugin {
 
-    private static final String EXAMPLE_QUEST = "quests/example_woodcutter.yml";
+    private static final List<String> EXAMPLE_QUESTS = List.of("quests/example_woodcutter.yml", "quests/example_lumber_baron.yml");
 
     private @Nullable ProgressStorage storage;
     private @Nullable PlacedBlockTracker placedBlocks;
@@ -69,6 +73,8 @@ public final class JourneysPlugin extends JavaPlugin {
 
         Messages messages = new Messages(this);
         messages.load();
+        Categories categories = new Categories(this);
+        categories.load();
 
         try {
             storage = SqlProgressStorage.create(config.storage(), getDataPath(), getLogger());
@@ -95,10 +101,13 @@ public final class JourneysPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(placedBlocks, this);
 
         ObjectiveTypes.all(engine, placedBlocks).forEach(registries.objectives()::register);
-        ConditionTypes.all(() -> engine).forEach(registries.conditions()::register);
+        ConditionTypes.all(() -> engine, holders, quests).forEach(registries.conditions()::register);
         RewardTypes.all().forEach(registries.rewards()::register);
 
-        api = new JourneysApiImpl(quests, engine, engine, holders, placedBlocks, registries);
+        // Menus need the full context, which is built below; the API only calls this after enable.
+        AtomicReference<JourneysContext> context = new AtomicReference<>();
+        api = new JourneysApiImpl(quests, engine, engine, holders, placedBlocks,
+                (player, category) -> QuestBoardMenu.open(context.get(), player, category, null), registries);
         Journeys.register(api);
         getServer().getServicesManager().register(JourneysApi.class, api, this, ServicePriority.Normal);
 
@@ -109,9 +118,13 @@ public final class JourneysPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(prompts, this);
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
 
-        JourneysContext ctx = new JourneysContext(this, engine, quests, registries, holders, messages, prompts,
+        JourneysContext ctx = new JourneysContext(this, engine, quests, registries, holders, messages, categories, prompts,
                 new EditorSessions(quests, validator));
-        Runnable reload = () -> reload(messages, quests);
+        context.set(ctx);
+        Runnable reload = () -> {
+            categories.load();
+            reload(messages, quests);
+        };
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event ->
                 event.registrar().register(new JourneysCommand(ctx, reload).build(), "Quest log, editor and admin commands", JourneysCommand.ALIASES));
 
@@ -167,7 +180,7 @@ public final class JourneysPlugin extends JavaPlugin {
     private void writeExampleQuest() {
         Path folder = getDataPath().resolve("quests");
         if (!Files.exists(folder)) {
-            saveResource(EXAMPLE_QUEST, false);
+            EXAMPLE_QUESTS.forEach(file -> saveResource(file, false));
         }
     }
 
