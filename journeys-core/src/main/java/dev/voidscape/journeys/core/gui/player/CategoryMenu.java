@@ -27,6 +27,11 @@ final class CategoryMenu extends PaginatedMenu<Categories.Category> {
     }
 
     @Override
+    protected boolean live() {
+        return true;
+    }
+
+    @Override
     protected Component title() {
         return ctx.messages().get("gui.board.title");
     }

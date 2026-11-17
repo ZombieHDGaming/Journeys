@@ -38,6 +38,14 @@ public abstract class Menu implements InventoryHolder {
     /** Places buttons with {@link #set(int, Button)}. */
     protected abstract void build();
 
+    /**
+     * Whether this menu shows state that can change while it is open, and should be redrawn by {@link LiveMenus}.
+     * Off by default; editor menus show the viewer's own draft and only change when they click.
+     */
+    protected boolean live() {
+        return false;
+    }
+
     public final void open() {
         inventory = Bukkit.createInventory(this, rows() * 9, title());
         render();

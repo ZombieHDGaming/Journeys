@@ -22,3 +22,9 @@ autosave-seconds: 300
 
 # Show objective progress (e.g. "Oak logs 3/10") in the action bar.
 progress-action-bar: true
+
+gui:
+  # The quest board, quest log and choice menus update instantly when the player's quests change. This timer also
+  # redraws them to catch changes made outside Journeys, such as a permission granted by a rank plugin or the player
+  # levelling up. In seconds; 0 turns the timer off (instant quest updates still happen).
+  live-refresh-seconds: 2

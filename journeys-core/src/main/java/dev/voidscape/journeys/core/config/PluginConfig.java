@@ -10,8 +10,9 @@ import org.bukkit.configuration.file.FileConfiguration;
  * @param storage         progress storage settings
  * @param autosaveSeconds how often changed progress is flushed to storage
  * @param progressActionBar whether objective progress is shown in the action bar
+ * @param liveRefreshSeconds how often open player menus redraw to catch outside changes; 0 disables the timer
  */
-public record PluginConfig(StorageSettings storage, int autosaveSeconds, boolean progressActionBar) {
+public record PluginConfig(StorageSettings storage, int autosaveSeconds, boolean progressActionBar, int liveRefreshSeconds) {
 
     public static PluginConfig from(FileConfiguration config) {
         ConfigurationSection storage = config.getConfigurationSection("storage");
@@ -21,7 +22,8 @@ public record PluginConfig(StorageSettings storage, int autosaveSeconds, boolean
         return new PluginConfig(
                 StorageSettings.from(storage),
                 Math.max(10, config.getInt("autosave-seconds", 300)),
-                config.getBoolean("progress-action-bar", true)
+                config.getBoolean("progress-action-bar", true),
+                Math.max(0, config.getInt("gui.live-refresh-seconds", 2))
         );
     }
 

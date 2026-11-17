@@ -14,6 +14,7 @@ import dev.voidscape.journeys.core.config.PluginConfig;
 import dev.voidscape.journeys.core.editor.EditorSessions;
 import dev.voidscape.journeys.core.engine.QuestEngine;
 import dev.voidscape.journeys.core.gui.ChatPrompts;
+import dev.voidscape.journeys.core.gui.LiveMenus;
 import dev.voidscape.journeys.core.gui.MenuListener;
 import dev.voidscape.journeys.core.gui.player.QuestBoardMenu;
 import dev.voidscape.journeys.core.holder.SimpleHolderService;
@@ -56,6 +57,7 @@ public final class JourneysPlugin extends JavaPlugin {
     private @Nullable PlacedBlockTracker placedBlocks;
     private @Nullable QuestEngine engine;
     private @Nullable IntegrationManager integrations;
+    private @Nullable LiveMenus liveMenus;
     private @Nullable Registries registries;
     private @Nullable JourneysApi api;
 
@@ -117,6 +119,8 @@ public final class JourneysPlugin extends JavaPlugin {
         ChatPrompts prompts = new ChatPrompts(this, messages);
         getServer().getPluginManager().registerEvents(prompts, this);
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
+        liveMenus = new LiveMenus(this);
+        liveMenus.start(config.liveRefreshSeconds());
 
         JourneysContext ctx = new JourneysContext(this, engine, quests, registries, holders, messages, categories, prompts,
                 new EditorSessions(quests, validator));
@@ -139,6 +143,9 @@ public final class JourneysPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (liveMenus != null) {
+            liveMenus.stop();
+        }
         if (integrations != null) {
             integrations.disableAll();
         }

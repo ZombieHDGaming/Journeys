@@ -55,6 +55,11 @@ public final class QuestBoardMenu extends PaginatedMenu<BoardEntries.Entry> {
     }
 
     @Override
+    protected boolean live() {
+        return true;
+    }
+
+    @Override
     protected Component title() {
         if (category == null) {
             return ctx.messages().get("gui.board.title");

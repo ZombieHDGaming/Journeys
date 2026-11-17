@@ -35,6 +35,11 @@ public final class QuestLogMenu extends PaginatedMenu<QuestLogMenu.Entry> {
     }
 
     @Override
+    protected boolean live() {
+        return true;
+    }
+
+    @Override
     protected Component title() {
         return ctx.messages().get(history ? "gui.log.title-history" : "gui.log.title-active");
     }

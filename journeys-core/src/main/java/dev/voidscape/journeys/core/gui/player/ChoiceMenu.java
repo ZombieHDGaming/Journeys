@@ -28,6 +28,11 @@ public final class ChoiceMenu extends Menu {
     }
 
     @Override
+    protected boolean live() {
+        return true;
+    }
+
+    @Override
     protected Component title() {
         return ctx.messages().get("gui.choice.title", Text.parsed("quest", quest.displayName()));
     }
